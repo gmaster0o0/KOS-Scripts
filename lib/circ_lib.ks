@@ -13,7 +13,11 @@ function raisePeriapsis {
   parameter targetPeri is apoapsis.
   parameter errorTreshold is 1.05.
 
-  printO("CIRC","Periapsis emelese").
+  local dv is deltaVToPeriapsis().
+  local bt is burnTimeForDv(dv).
+  waitToApoapsis(bt/2).
+
+  printO("CIRC","Periapsis emelese:[DV:"+dv+"][BT:"+bt+"]").
   lock throttle to 1.
   lock steering to circPrograde().
   until status = "ORBITING" and (
@@ -36,9 +40,9 @@ function circPrograde {
   parameter threshold is 30.
 
   if(eta:apoapsis < eta:periapsis){
-    print "-30..0" + r(0,max(-eta:apoapsis,-threshold),0) at (0,30).
+    //print "-30..0" + r(0,max(-eta:apoapsis,-threshold),0) at (0,30).
     return prograde:vector + r(0,max(-eta:apoapsis,-threshold),0).
   }
-  print "0..30" + r(0,min(orbit:period - eta:apoapsis,threshold),0) at (0,31).
+  //print "0..30" + r(0,min(orbit:period - eta:apoapsis,threshold),0) at (0,31).
   return prograde:vector + r(0,min(orbit:period - eta:apoapsis,threshold),0).
 }
