@@ -1,35 +1,90 @@
+runPath("../lib/staging_lib.ks").
+
 clearScreen.
+parameter targetApo is 80000.
 
-set steering to UP.
-set throttle to 1.
+local mypart is "KERBINTOURS".
 
+function printO {
+  parameter part.
+  parameter msg.
+
+  print "T+" + round(time:seconds) + "["+ part + "]" + msg.
+}
+
+function flightData {
+  print apoapsis at (15,1).
+  print periapsis at (15,2).
+  print altitude at (15,3).
+}
+
+print "========KERBINTOURS========".
+print "APOAPSIS:".
+print "PERIAPSIS:".
+print "ALTITUDE:".
+
+
+printO(mypart,"KILOVES").
+lock pitch  to max(8,90*(1-apoapsis/body:atm:height)).
+lock steering to heading(90,pitch).
+lock throttle to 1.
 stage.
 
-until apoapsis > 90000 {
-  print "APOAPSIS: " + round(apoapsis) at (2,3).
-  print "SPEED: " + round(airspeed) at (2,4).
+printO(mypart,"EMELKEDES").
+until apoapsis > targetApo {
+  flightData().
+  checkBoosters().
+}
 
-  if(checkEngines()){
-    stage.
+lock throttle to 0.
+printO(mypart,"Varakozas amig kierunk az atmoszferabol").
+until altitude > body:atm:height {
+  flightData().
+}
+
+printO(mypart,"Varunk aming az apoapsishoz erunk").
+until eta:apoapsis < 10 {
+  flightData().
+}
+
+printO(mypart,"Periapsis emelese").
+lock  throttle to 1.
+lock steering to prograde.
+until periapsis > 70000 {
+  flightData().
+  checkBoosters().
+  if (eta:apoapsis < eta:periapsis and eta:apoapsis > 10) or 
+     (eta:apoapsis - ship:orbit:period > - 10 and eta:apoapsis > eta:periapsis) 
+  {
+    lock  throttle to 0.
+  } else {
+    lock  throttle to 1.
   }
 }
-set throttle to 0.
 
+lock  throttle to 0.
+wait 20.
+
+printO(mypart,"Varunk aming az apoapsishoz erunk").
+until eta:apoapsis < 10 {
+  flightData().
+}
+
+printO(mypart,"Periapsis csokkentese").
+lock  throttle to 1.
+lock steering to retrograde.
+until  periapsis < 20000 {
+  flightData().
+  checkBoosters().
+}
+lock  throttle to 0.
+
+printO(mypart,"Varunk aming az atmoszferaba erunk").
+until altitude < body:atm:height {
+  flightData().
+}
+
+printO(mypart,"Ejtoernyo program aktivalasa").
 doSafeParachute().
 
-function doSafeParachute {
-  until status = "LANDED" or status = "SPLASHED" {
-    if NOT CHUTESSAFE and altitude < body:atm:height and verticalSpeed < 0 {
-        print("STAGING:Ejtőernyő kinyitva").
-        CHUTESSAFE ON.
-    }
-  }
-}
-
-function checkEngines {
-  list engines in engines.
-  if(engines:length <> 0){
-    return ship:availableThrust = 0.
-  }
-  return false.
-}
+printO(mypart,"TOUCHDOWN").
