@@ -1,90 +1,54 @@
+runPath("../lib/ui_lib.ks").
 runPath("../lib/staging_lib.ks").
+runPath("../lib/circ_lib.ks").
+runPath("../lib/launch_lib.ks").
+runPath("../lib/landing_lib.ks").
 
 clearScreen.
+parameter missionStatus is 0.
 parameter targetApo is 80000.
-
-local mypart is "KERBINTOURS".
-
-function printO {
-  parameter part.
-  parameter msg.
-
-  print "T+" + round(time:seconds) + "["+ part + "]" + msg.
-}
-
-function flightData {
-  print apoapsis at (15,1).
-  print periapsis at (15,2).
-  print altitude at (15,3).
-}
 
 print "========KERBINTOURS========".
 print "APOAPSIS:".
 print "PERIAPSIS:".
 print "ALTITUDE:".
+print "========Event log========".
 
 
-printO(mypart,"KILOVES").
-lock pitch  to max(8,90*(1-apoapsis/body:atm:height)).
-lock steering to heading(90,pitch).
-lock throttle to 1.
-stage.
-
-printO(mypart,"EMELKEDES").
-until apoapsis > targetApo {
-  flightData().
-  checkBoosters().
+if(missionStatus = 0) {
+  launch(3).
+  set missionStatus to 1.
 }
-
-lock throttle to 0.
-printO(mypart,"Varakozas amig kierunk az atmoszferabol").
-until altitude > body:atm:height {
-  flightData().
+if(missionStatus = 1) {
+  gravityTurn(targetApo).
+  set missionStatus to 2.
 }
-
-printO(mypart,"Varunk aming az apoapsishoz erunk").
-until eta:apoapsis < 10 {
-  flightData().
+if(missionStatus = 2) {
+  waitUntilEndOfAtmosphere().
+  set missionStatus to 3.
 }
-
-printO(mypart,"Periapsis emelese").
-lock  throttle to 1.
-lock steering to prograde.
-until periapsis > 70000 {
-  flightData().
-  checkBoosters().
-  if (eta:apoapsis < eta:periapsis and eta:apoapsis > 10) or 
-     (eta:apoapsis - ship:orbit:period > - 10 and eta:apoapsis > eta:periapsis) 
-  {
-    lock  throttle to 0.
-  } else {
-    lock  throttle to 1.
-  }
+if(missionStatus = 3) {
+  waitToApoapsis().
+  set missionStatus to 4.
 }
-
-lock  throttle to 0.
-wait 20.
-
-printO(mypart,"Varunk aming az apoapsishoz erunk").
-until eta:apoapsis < 10 {
-  flightData().
+if(missionStatus = 4) {
+  raisePeriapsis().
+  set missionStatus to 5.
 }
-
-printO(mypart,"Periapsis csokkentese").
-lock  throttle to 1.
-lock steering to retrograde.
-until  periapsis < 20000 {
-  flightData().
-  checkBoosters().
+if(missionStatus = 5) {
+  wait 20.
+  waitToApoapsis().
+  set missionStatus to 6.
 }
-lock  throttle to 0.
-
-printO(mypart,"Varunk aming az atmoszferaba erunk").
-until altitude < body:atm:height {
-  flightData().
+if(missionStatus = 6) {
+  deOrbitBurn().
+  set missionStatus to 7.
 }
-
-printO(mypart,"Ejtoernyo program aktivalasa").
-doSafeParachute().
-
-printO(mypart,"TOUCHDOWN").
+if(missionStatus = 7) {
+  waitToEnterToATM().
+  set missionStatus to 8.
+}
+if(missionStatus = 8) {
+  doSafeParachute().
+  printO("KERBINTOURS","TOUCHDOWN").
+}
