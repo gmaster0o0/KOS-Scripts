@@ -53,6 +53,7 @@ function waitUntilLeaveSOI {
 }
 
 function avoidCollision {
+  printO("TRANSFER", "Elkerülő manőver.PE:" + periapsis).
   parameter minPer is 40000.
   if periapsis < 40000 {
     lock steering to heading (90,0).
@@ -61,6 +62,8 @@ function avoidCollision {
     until periapsis > minPer {
       if periapsis / minPer > 0.9 {
         lock throttle to max(0.05, 1-periapsis / minPer ).
+        print "PE:" at (0,1).
+        print periapsis at (15,1).
       }
     }
     lock throttle to 0.

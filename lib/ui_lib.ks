@@ -2,7 +2,7 @@ function printO {
   parameter part.
   parameter msg.
 
-  print "T+" + round(time:seconds) + "["+ part + "]" + msg.
+  print "T+" + round(missionTime) + "["+ part + "]" + msg.
 }
 
 function countDown {

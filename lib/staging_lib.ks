@@ -1,8 +1,9 @@
 function doSafeParachute {
   until status = "LANDED" or status = "SPLASHED" {
-    if NOT CHUTESSAFE and altitude < body:atm:height and verticalSpeed < 0 {
+    if NOT chutesSafe and altitude < body:atm:height and verticalSpeed < 0 {
         print("STAGING:Ejtőernyő kinyitva").
-        CHUTESSAFE ON.
+        chutesSafe ON.
+        gear ON.
     }
   }
 }

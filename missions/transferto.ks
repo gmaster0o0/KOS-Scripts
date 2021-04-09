@@ -41,21 +41,8 @@ if(missionStatus = 8) {
   set missionStatus to 9.
 }
 if(missionStatus = 9){
-  waitUntilLeaveSOI().
-  set missionStatus to 10.
+  lowerApoapsis().
 }
-if(missionStatus = 10){
-  deOrbitBurn().
-  set missionStatus to 11.
-}
-if(missionStatus = 11){
-  waitToEnterToATM().
-  set missionStatus to 12.
-}
-if(missionStatus = 12){
-  reachSafeLandingSpeed().
-  set missionStatus to 13.
-}
-doSafeParachute().
+
 
 
