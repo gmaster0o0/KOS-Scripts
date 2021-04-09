@@ -2,25 +2,24 @@ function waitForTransferWindow {
   local tAngVel is 360/target:obt:period.
   local sAngVel is 360/ship:obt:period.
   local angleChangeRate is abs(tAngVel-sAngVel).
-  local dv to hohhmanDv().
+  local dv to hohmannDv().
   local bt to burnTimeForDv(dv).
   local ht to hohmanmTime().
 
-  local ETAofTransfer to abs(getTargetAngle() - hohmanmTime())/ angleChangeRate.
+  local ETAofTransfer to (getTargetAngle() - hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
 
-  until ETAofTransfer - bt/2 {
+  until ETAofTransfer < bt/2 {
     wait 1.
     set tAngVel to 360/target:obt:period.
     set sAngVel to 360/ship:obt:period.
     local targetAng to getTargetAngle().
     set angleChangeRate to abs(tAngVel-sAngVel).
-    set ETAofTransfer to abs(getTargetAngle() - hohmanmTime())/ angleChangeRate.
-
-    print round(targetAng) at (15,1).
-    print round(ETAofTransfer) at (15,2).
-    print round(angleChangeRate) at (15,3).
+    set ETAofTransfer to (getTargetAngle() - hohmanmTime()) / angleChangeRate.
+    print round(targetAng,1) at (25,1).
+    print round(ETAofTransfer,1) at (25,2).
+    print round(angleChangeRate,2) at (25,3).
   }
 }
 
@@ -40,6 +39,37 @@ function doOrbitTransfer {
   printO("TRANSFER","Pályamódosítás befejezve:"+ round(apoapsis)).
   unlock all.
 }
+
+function waitToEncounter {
+  wait until status = "ESCAPE".
+  printO("TRANSFER",target:name + "Vonzáskörzete elérve").
+}
+
+function waitUntilLeaveSOI {
+  parameter home is "KERBIN".
+  local OldSOI is body:name.
+  wait until body:name = home.
+  printO("TRANSFER",OldSOI + "Vonzáskörzete elhagyva").
+}
+
+function avoidCollision {
+  parameter minPer is 40000.
+  if periapsis < 40000 {
+    lock steering to heading (90,0).
+    wait 10.
+    lock throttle to 1.
+    until periapsis > minPer {
+      if periapsis / minPer > 0.9 {
+        lock throttle to max(0.05, 1-periapsis / minPer ).
+      }
+    }
+    lock throttle to 0.
+
+    printO("TRANSFER", "Elkerülő manőver befejezve.PE:" + periapsis).
+  }
+  wait 2.
+}
+
 
 function lngToDegrees {
   parameter lng.

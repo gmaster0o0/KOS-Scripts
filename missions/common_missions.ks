@@ -55,22 +55,26 @@ function spashDownMission {
 }
 
 function haulMission {
-  printO("haulMission","Starting").
-  local finished to false.
   parameter goalALT.
   parameter maxSpeed is 0.
 
+  printO("haulMission","Starting. ALT="+goalALT).
+  local finished to false.
   local th to 1.
   lock throttle to th. 
   LOCK STEERING TO UP.
   doSafeStage().
 
   until finished {
+    checkBoosters().
     if maxSpeed = 0 {
       set th to apoapsLimit(goalALT).
     }else{
       set th to speedLimit(maxSpeed).
     }
+    print finished at (0,30).
+    print finished at (0,30).
+    print finished at (0,30).
     if(SHIP:ALTITUDE > goalALT){
       set finished to true.
     }

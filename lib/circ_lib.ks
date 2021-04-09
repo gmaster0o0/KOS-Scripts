@@ -17,7 +17,7 @@ function raisePeriapsis {
   local bt is burnTimeForDv(dv).
   waitToApoapsis(bt/2).
 
-  printO("CIRC","Periapsis emelese:[DV:"+dv+"][BT:"+bt+"]").
+  printO("CIRC","Periapsis emelese:[DV:"+round(dv,1)+"][BT:"+round(bt,1)+"]").
   lock throttle to 1.
   lock steering to circPrograde().
   until status = "ORBITING" and (

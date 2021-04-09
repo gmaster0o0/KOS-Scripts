@@ -17,3 +17,14 @@ function waitToEnterToATM {
     flightData().
   }
 }
+
+function reachSafeLandingSpeed {
+  printO("LANDING","Fékezés biztonságos sebességre").
+  lock  throttle to 1.
+  lock steering to retrograde.
+  until airspeed < 1500 {
+    flightData().
+    checkBoosters().
+  }
+  lock  throttle to 0.
+}
