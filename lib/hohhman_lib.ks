@@ -9,6 +9,16 @@ function deltaVToPeriapsis {
   return hohmannDv(body:radius + periapsis,body:radius + apoapsis).
 }
 
+function hohhmanDVFromPeriod {
+	parameter newPeriod.
+
+	local newSemiMajorAxis is ((body:mu * newPeriod^2)/(4 * constant:pi))^(1/3).
+  local newSemiMinorAxis is newSemiMajorAxis * sqrt(1-obt:eccentricity).
+  local dv is hohmannDv((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
+
+	return dv.
+}
+
 function hohmanmTime {
   local r1 is ship:obt:semimajoraxis.
 	local r2 is target:obt:semimajoraxis.

@@ -27,10 +27,6 @@ if(missionStatus = 1) {
 }
 if(missionStatus = 2) {
   waitUntilEndOfAtmosphere().
-  set missionStatus to 3.
-}
-if(missionStatus = 3) {
-  //waitToApoapsis().
   set missionStatus to 4.
 }
 if(missionStatus = 4) {

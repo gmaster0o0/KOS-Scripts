@@ -1,4 +1,5 @@
 function doSafeParachute {
+  lock steering to srfRetrograde.     
   until status = "LANDED" or status = "SPLASHED" {
     if NOT chutesSafe and altitude < body:atm:height and verticalSpeed < 0 {
         print("STAGING:Ejtőernyő kinyitva").

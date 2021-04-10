@@ -29,10 +29,6 @@ if(missionStatus = 2) {
   set missionStatus to 3.
 }
 if(missionStatus = 3) {
-  //waitToApoapsis().
-  set missionStatus to 4.
-}
-if(missionStatus = 4) {
   raisePeriapsis().
-  set missionStatus to 5.
+  set missionStatus to 4.
 }

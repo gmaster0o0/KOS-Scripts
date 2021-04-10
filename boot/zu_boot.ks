@@ -16,9 +16,12 @@ copyPath("0:/zurugynokseg/lib/circ_lib.ks","1:/lib").
 copyPath("0:/zurugynokseg/lib/transfer_lib.ks","1:/lib").
 copyPath("0:/zurugynokseg/lib/hohhman_lib.ks","1:/lib").
 copyPath("0:/zurugynokseg/lib/rocket_utils_lib.ks","1:/lib").
+copyPath("0:/zurugynokseg/lib/rendezvous_lib.ks","1:/lib").
 
 copyPath("0:/zurugynokseg/missions/kerbintours.ks","1:/missions").
 copyPath("0:/zurugynokseg/missions/parkingOrbit.ks","1:/missions").
 copyPath("0:/zurugynokseg/missions/flybymun.ks","1:/missions").
+copyPath("0:/zurugynokseg/missions/transferTo.ks","1:/missions").
+copyPath("0:/zurugynokseg/missions/rescue.ks","1:/missions").
 
 cd("missions").
