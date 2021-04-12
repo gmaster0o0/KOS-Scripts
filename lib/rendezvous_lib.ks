@@ -1,4 +1,4 @@
-function increasePeriod {
+function changePeriod {
   local targetPeriod is target:obt:period.
   local newPeriod is targetPeriod + targetPeriod * (360-getTargetAngle())/360.
 
@@ -49,7 +49,7 @@ function waitTheClosestDistance {
 }
 
 function killRelVel {
-  parameter maxVel is 1.
+  parameter velGoal is 1.
 
   local relVelVec to target:velocity:orbit - ship:velocity:orbit.
   lock steering to relVelVec.
@@ -142,7 +142,7 @@ function approcheTarget {
   until target:distance < distanceGoal {
     local lastVel to killRelVel().
     decreaseDistance(distanceGoal, lastVel).
-    if target:distance > 4000 {
+    if target:distance > 2000 {
       waitTheClosestDistance().
     }
   }

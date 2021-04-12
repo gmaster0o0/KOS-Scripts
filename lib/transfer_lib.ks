@@ -9,7 +9,7 @@ function waitForTransferWindow {
   local ETAofTransfer to (getTargetAngle() - hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
-
+  lock steering to prograde.
   until ETAofTransfer < bt/2 {
     wait 1.
     set tAngVel to 360/target:obt:period.

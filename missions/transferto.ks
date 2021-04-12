@@ -8,7 +8,12 @@ runPath("../lib/hohhman_lib.ks").
 runPath("../lib/transfer_lib.ks").
 
 parameter missionStatus is 0.
-parameter targetBody is "MUN".
+
+local targetBody is MUN.
+
+if hasTarget {
+  set targetBody  to target.
+}
 
 //LAUNCH TO PARKING ORBIT.
 if missionStatus < 5 {
@@ -24,7 +29,7 @@ print "angleChangeRate:".
 print "========Event log========".
 
 if(missionStatus = 5) {
-  set target to body(targetBody).
+  set target to targetBody.
   waitForTransferWindow().
   set missionStatus to 6.
 }
