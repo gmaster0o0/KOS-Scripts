@@ -2,26 +2,23 @@ function changePeriod {
   local targetPeriod is target:obt:period.
   local newPeriod is targetPeriod + targetPeriod * (360-getTargetAngle())/360.
 
-  local dv is hohhmanDVFromPeriod(newPeriod).
+  local newSemiMajorAxis is ((body:mu * newPeriod^2)/(4 * constant:pi))^(1/3).
+  local newSemiMinorAxis is newSemiMajorAxis * sqrt(1-obt:eccentricity).
+  local dv is hohmannDv((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
+  
   local bt is burnTimeForDv(dv).
-
   local correction is 1.
-  if newPeriod > ship:orbit:period {
+  if newPeriod > ship:obt:period {
     lock steering to prograde.
   }else {
     lock steering to retrograde.
     set correction to -1.
   }
-  
   waitToPeriapsis(bt/2).
-
-  printO("REND", "Pálya modósítás." + ship:obt:period).
-  printO("REND", "Pálya modósítás. DV:" + dv + " BT:"+ bt).
- 
   lock throttle to 1.
-  //1: NEW:15 > current:10 C=>16  C:16 > N:15 OK
-  //-1 NEW:5 > current:4 C=>4   C:4>N:5 NEM OK..... C:-4 >N:-5
-  until correction * ship:orbit:period > newPeriod * correction {
+  //1: New:15 > current : 10 => C=>16 N= 15, 16>15 OK
+  //-1: New 10 < current:15 => C=>9 N=10,  9>10 NEMOK.... -9 > -10
+  until ship:obt:period * correction > correction * newPeriod {
   }
   printO("REND", "Pálya módosítva. Új keringési idő:" + newPeriod).
   lock throttle to 0.
@@ -58,20 +55,19 @@ function killRelVel {
   lock steering to relVelVec.
   local maxSpeed is relVelVec:mag.
   local prevSpeed is relVelVec:mag.
-
   wait until steeringManager:ANGLEERROR < 1.
   local th is 1.
+
   printO("REND", "Relativ sebesseg eliminalasa:"+ maxSpeed).
   until relVelVec:mag < velGoal or prevSpeed - relVelVec:mag < -1 {
     wait 0.1.
-
     set prevSpeed to relVelVec:mag.
     set relVelVec to target:velocity:orbit - ship:velocity:orbit.
     set th to relVelVec:mag / (ship:availableThrust/ship:mass).
     lock throttle to th.
-
     //velocityVectorsDraw().
   }
+
   lock throttle to 0.
   printO("REND", "Relativ sebesseg eliminalva. Hiba:" + relVelVec:mag).
   CLEARVECDRAWS().
@@ -83,19 +79,19 @@ function decreaseDistance {
   parameter distanceGoal is 50.
   parameter maxSpeed is 300.
 
-  local turningTime is 5.
+  local turningTime is 10.
 
   printO("REND", "Tavolsag csokkentese:" + target:distance + " maxSpeed:"+ maxSpeed).
   lock steering to target:position.
   wait turningTime.
-
+  
   local relVelVec to target:velocity:orbit - ship:velocity:orbit.
   local startDistance is target:distance.
-  local engineAcc is ship:availablethrust /ship:mass.
+  local engineAcc is ship:availablethrust / ship:mass.
 
   local th is getThrottle(turningTime,startDistance,relVelVec:mag).
-  lock throttle to th.
 
+  lock throttle to th.
   until target:distance < startDistance/2 or 
         target:distance < distanceGoal or
         shipCannotStop(engineAcc, turningTime) or
@@ -103,9 +99,9 @@ function decreaseDistance {
   {
     set relVelVec to target:velocity:orbit - ship:velocity:orbit.
     set th to getThrottle(turningTime, startDistance,relVelVec:mag).
+
     //positionVectorsDraw().
   }
-
   lock throttle to 0.
   CLEARVECDRAWS().
   printO("REND", "Új távolság:" + target:distance).
@@ -146,7 +142,7 @@ function approcheTarget {
   until target:distance < distanceGoal {
     local lastVel to killRelVel().
     decreaseDistance(distanceGoal, lastVel).
-    if target:distance > 4000 {
+    if target:distance > 2000 {
       waitTheClosestDistance().
     }
   }
