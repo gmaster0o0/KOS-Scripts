@@ -44,3 +44,13 @@ function listActiveEngines {
   }
   return activeEngines.
 }
+
+function handleThrottle {
+  parameter currentValue.
+  parameter targetValue.
+
+  if currentValue / targetValue > 0.9 {
+    return 0.1.
+  }
+  return 1.
+}

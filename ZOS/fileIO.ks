@@ -38,8 +38,7 @@ function copyFiles {
     for f in fileList {
       local fsize is getFileSize(f, namespace,volume(0)).
       local targetPath is listToPath(list(core:volume:name,namespace,f)).
-      if exists(targetPath and updateMode) {
-        print f + "...deleted:["+ fsize +"]".
+      if exists(targetPath) and updateMode {
         deletePath(targetPath).
       }
       local delay is fsize / iospeed.

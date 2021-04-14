@@ -52,8 +52,9 @@ function lowerApoapsis {
 
   local dv to deltaVToPeriapsis().
   local bt to burnTimeForDv(dv).
-
+  
   lock steering to circRetrograde().
+  wait until steeringManager:ANGLEERROR < 1.
   waitToPeriapsis(bt/2).
 
   printO("CIRC", "Gyorsítás a körpálya eléréséhez. DV:" + round(dv,1) + "  BT:"+round(bt)).

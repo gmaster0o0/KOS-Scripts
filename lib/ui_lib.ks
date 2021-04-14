@@ -20,3 +20,23 @@ function flightData {
   print periapsis at (15,2).
   print altitude at (15,3).
 }
+
+function drawVec {
+  parameter vec.
+  parameter color.
+  parameter title.
+  parameter vectorSize is 0.5.
+
+  local vecD TO VECDRAW(
+    V(0,0,0),
+    vec,
+    color,
+    title,
+    vectorSize,
+    TRUE,
+    0.2,
+    TRUE,
+    TRUE
+  ).
+  return vecD.
+}

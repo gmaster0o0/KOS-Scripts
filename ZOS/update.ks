@@ -19,3 +19,4 @@ function updateFileList {
   update(fileList,dir).
 }
 updateFileList(rootDir).
+print "Free space:" + volume(1):freespace + "/" + volume(1):capacity.
