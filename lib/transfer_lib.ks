@@ -23,18 +23,19 @@ function waitForTransferWindow {
   }
 }
 
-function escapeTransfer {
+function calculateReturnTransfer {
   parameter PE_GOAL is 30000.
-  parameter targetBody is body("KERBIN").
 
-  local RET_AP to body:altitude + body:radius.
+  //Kerbin Arrival Orbit 
+  local RET_AP to body:altitude + body:body:radius.
   print "RET_AP:     " + RET_AP.
-  local RET_PE to PE_GOAL + targetBody:radius.
+  local RET_PE to PE_GOAL + body:body:radius.
   print "RET_PE:     " + RET_PE.
   local RET_SMA to (RET_PE+RET_AP)/2.
   print "RET_SMA:     " + RET_SMA.
-  local V_AP to sqrt(targetBody:mu * (2/(RET_AP) - (1/RET_SMA))).
+  local V_AP to sqrt(body:body:mu * (2/(RET_AP) - (1/RET_SMA))).
   print "V_AP:     " + V_AP.
+  //CURRENT DATAS
   local V_OBT to body:OBT:VELOCITY:ORBIT:MAG.
   print "V_OBT:     " + V_OBT.
   local V_REL to V_OBT - V_AP.
@@ -43,27 +44,15 @@ function escapeTransfer {
   print "R_PE:     " + R_PE.
   local R_AP is  apoapsis +body:radius.
   print "R_AP:     " + R_AP.
-
-  local V_ESC0 to sqrt(body:mu * (2/(R_PE)-1/(body:SOIRADIUS + R_PE)/2)).
-  print "V_ESC0:     " + V_ESC0.
-  
-  local V_ESC1 to sqrt(2*body:mu / R_PE).
-  print "V_ESC1:     " + V_ESC1.
-
-  local V_ESC2 to sqrt(body:mu * (2/R_PE + 1/(R_PE+ body:soiradius))).
-  print "V_ESC2:     " + V_ESC2.
-
-  local V_ESC is V_ESC0.
-  //V_REL = V_EXC. V_EXC^2 = V_BO^2 - V_ESC^2 
+  local V_ESC to sqrt(2*body:mu / R_PE).
+  print "V_ESC:     " + V_ESC.
   local V_BO to sqrt(V_REL^2 + V_ESC^2).
   print "V_BO:     " + V_BO.
-    
   local V_CURRENT to VELOCITY:ORBIT:MAG.
   print "V_CURRENT:     " + V_CURRENT.
   local DeltaV to V_BO - V_CURRENT.
   print "DeltaV:      " + DeltaV.
-  local BurnTime to burnTimeForDv(DeltaV).
-  print "Burn Time:      " + BurnTime.
+  //HYPERBLOIC TRAJECTORY DATA
   local SMA_HYP is 1/(2/R_PE-(V_BO^2/body:mu)).
   print "SMA_HYP:     " + SMA_HYP.
   local HYP_ECC is 1 - R_PE/SMA_HYP.
@@ -71,61 +60,72 @@ function escapeTransfer {
   //angle betwee dep asymptote and periapsis vector
   local A_ANGLE is ARCCOS(-1/HYP_ECC).
   print "A_ANGLE:       " +  A_ANGLE.
+  local ORBIT_ANGLE is calcSignAngle().
+  local PHASE_ETA is calcPhaseETA(A_ANGLE,ORBIT_ANGLE).
+  print "PHASE_ETA:     " + PHASE_ETA.
+  print "================================================".
+
+  return lexicon(
+    "ang", A_ANGLE,
+    "eta", PHASE_ETA,
+    "dv", DeltaV
+  ).
+}
+
+function calcSignAngle {
   local BODY_VEL_V is BODY:OBT:VELOCITY:ORBIT.
   local SHIP_V_V is SHIP:VELOCITY:ORBIT.
   local SHIP_P_V to body:position.
   local SHIP_N_V to vCrs(SHIP_P_V,SHIP_V_V):normalized.
-  LOCAL ORBIT_ANGLE to lngToDegrees(arcTan2(vDot(vCrs(SHIP_V_V,BODY_VEL_V),SHIP_N_V),vDot(SHIP_V_V,BODY_VEL_V))).
-  print "OBT_ANGLE:     " + ORBIT_ANGLE.
-  local SHIP_ANG_VEL is 360/ship:orbit:period.
-  print "SHIP_ANG_VEL:     " + SHIP_ANG_VEL.
-  print "ANG_DIFF:      " + utilReduceTo360(A_ANGLE - ORBIT_ANGLE).
-  local PHASE_ETA is utilReduceTo360(A_ANGLE - ORBIT_ANGLE) / SHIP_ANG_VEL.
-  print "PHASE_ETA:     " + PHASE_ETA.
-  print "================================================".
+  //signed Angle between body velocity and ship velocity vector
+  LOCAL ANG to lngToDegrees(arcTan2(vDot(vCrs(SHIP_V_V,BODY_VEL_V),SHIP_N_V),vDot(SHIP_V_V,BODY_VEL_V))).
+  //CLEARVECDRAWS().
+  //drawVec(BODY_VEL_V,RED,"BODY_VEL_V").
+  //drawVec(SHIP_V_V,BLUE,"SHIP_V_V").
+  //drawVec(SHIP_N_V,WHITE,"SHIP_N_V").
+  return ANG.
+}
 
+function calcPhaseETA {
+  parameter targetAng.
+  parameter currentAng.
+
+  local shipAngularVelocity is 360/ship:orbit:period.
+  return utilReduceTo360(targetAng - currentAng) / shipAngularVelocity.
+}
+
+function escapeTransfer {
+  parameter PE_GOAL is 30000.
+
+  local transfer is calculateReturnTransfer(PE_GOAL).
   lock steering to prograde.
-
-  local n to node(time:seconds + PHASE_ETA, 0, 0, DeltaV).
-  add n.
-
+  local burnTime to burnTimeForDv(transfer["dv"]).
+  local PHASE_ETA is transfer["eta"].
+  //local testnode to node(time:seconds + transfer["eta"], 0, 0, transfer["dv"]).
+  //add testnode.
   until (PHASE_ETA < burnTime/2) {
-    set BODY_VEL_V to body:OBT:VELOCITY:ORBIT.
-    set SHIP_V_V to SHIP:VELOCITY:ORBIT.
-    set SHIP_P_V to body:position.
-    set SHIP_N_V to vCrs(SHIP_P_V,SHIP_V_V):normalized.
-
-    //CLEARVECDRAWS().
-    //drawVec(BODY_VEL_V,RED,"BODY_VEL_V").
-    //drawVec(SHIP_V_V,BLUE,"SHIP_V_V").
-    //drawVec(SHIP_N_V,WHITE,"SHIP_N_V").
-
-    set ORBIT_ANGLE to lngToDegrees(arcTan2(vDot(vCrs(SHIP_V_V,BODY_VEL_V),SHIP_N_V),vDot(SHIP_V_V,BODY_VEL_V))).
+    local ORBIT_ANGLE is calcSignAngle().
     print "OBT_ANGLE:  " + ORBIT_ANGLE + "     " at (5,33).
-    print "A_ANGLE:  " + A_ANGLE + "     "at (5,34).
-    print "ANG_DIFF: " + utilReduceTo360(A_ANGLE - ORBIT_ANGLE) + "     "at (5,35).
-    set PHASE_ETA to utilReduceTo360(A_ANGLE - ORBIT_ANGLE) / SHIP_ANG_VEL.
+    print "A_ANGLE:  " + transfer["ang"] + "     "at (5,34).
+    set PHASE_ETA to calcPhaseETA(transfer["ang"],ORBIT_ANGLE).
     print "PHASE_ETA:  " + Round(PHASE_ETA) + "     " at (5,36).
     wait 1.
     if PHASE_ETA < burnTime+60{
       KUNIVERSE:TIMEWARP:CANCELWARP().
       WAIT UNTIL SHIP:UNPACKED.
     }
-
   }
+
   wait until steeringManager:ANGLEERROR < 1.
-  printO("TRANSFER","Pályamódosítás megkezdése").
+
+  printO("TRANSFER","Pályamódosítás megkezdése[DV]:"+transfer["dv"]+"[BT]:"+burnTime).
   local th to 1.
   lock throttle to th.
   local DONE is false.
-  until V_BO - SHIP:VELOCITY:ORBIT:mag < 0.2 or DONE {
-    set BODY_VEL_V to body:OBT:VELOCITY:ORBIT.
-    set SHIP_V_V to SHIP:VELOCITY:ORBIT.
-
-    // CLEARVECDRAWS().
-    // drawVec(BODY_VEL_V,RED,"BODY_VEL_V").
-    // drawVec(SHIP_V_V,BLUE,"SHIP_V_V").
-    local DVLeft is V_BO-SHIP:VELOCITY:ORBIT:mag.
+  local goalVelocity is transfer["dv"]+ship:velocity:orbit:mag.
+  local DVLeft is transfer["dv"].
+  until DVLeft < -0.1*transfer["dv"] or DONE {
+    set DVLeft to goalVelocity-SHIP:VELOCITY:ORBIT:mag.
     set th to DVLeft / (ship:availableThrust/ship:mass).
     print "DVLeft: " + Round(DVLeft,2) + "                      "at (5,37).
     if obt:hasNextPatch {
