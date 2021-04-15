@@ -1,3 +1,6 @@
+
+local verbose is false.
+
 function waitForTransferWindow {
   local tAngVel is 360/target:obt:period.
   local sAngVel is 360/ship:obt:period.
@@ -28,43 +31,45 @@ function calculateReturnTransfer {
 
   //Kerbin Arrival Orbit 
   local RET_AP to body:altitude + body:body:radius.
-  print "RET_AP:     " + RET_AP.
   local RET_PE to PE_GOAL + body:body:radius.
-  print "RET_PE:     " + RET_PE.
   local RET_SMA to (RET_PE+RET_AP)/2.
-  print "RET_SMA:     " + RET_SMA.
   local V_AP to sqrt(body:body:mu * (2/(RET_AP) - (1/RET_SMA))).
-  print "V_AP:     " + V_AP.
   //CURRENT DATAS
   local V_OBT to body:OBT:VELOCITY:ORBIT:MAG.
-  print "V_OBT:     " + V_OBT.
   local V_REL to V_OBT - V_AP.
-  print "V_REL:     " + V_REL.  
   local R_PE is  periapsis +body:radius.
-  print "R_PE:     " + R_PE.
   local R_AP is  apoapsis +body:radius.
-  print "R_AP:     " + R_AP.
   local V_ESC to sqrt(2*body:mu / R_PE).
-  print "V_ESC:     " + V_ESC.
   local V_BO to sqrt(V_REL^2 + V_ESC^2).
-  print "V_BO:     " + V_BO.
   local V_CURRENT to VELOCITY:ORBIT:MAG.
-  print "V_CURRENT:     " + V_CURRENT.
   local DeltaV to V_BO - V_CURRENT.
-  print "DeltaV:      " + DeltaV.
   //HYPERBLOIC TRAJECTORY DATA
   local SMA_HYP is 1/(2/R_PE-(V_BO^2/body:mu)).
-  print "SMA_HYP:     " + SMA_HYP.
   local HYP_ECC is 1 - R_PE/SMA_HYP.
-  print "HYP_ECC:     " + HYP_ECC.
   //angle betwee dep asymptote and periapsis vector
   local A_ANGLE is ARCCOS(-1/HYP_ECC).
-  print "A_ANGLE:       " +  A_ANGLE.
   local ORBIT_ANGLE is calcSignAngle().
   local PHASE_ETA is calcPhaseETA(A_ANGLE,ORBIT_ANGLE).
-  print "PHASE_ETA:     " + PHASE_ETA.
-  print "================================================".
 
+  if verbose {
+    print "RET_AP:     " + RET_AP.
+    print "RET_PE:     " + RET_PE.
+    print "RET_SMA:     " + RET_SMA.
+    print "V_AP:     " + V_AP.
+    print "V_OBT:     " + V_OBT.
+    print "V_REL:     " + V_REL.  
+    print "R_PE:     " + R_PE.
+    print "R_AP:     " + R_AP.
+    print "V_ESC:     " + V_ESC.
+    print "V_BO:     " + V_BO.
+    print "V_CURRENT:     " + V_CURRENT.
+    print "DeltaV:      " + DeltaV.
+    print "SMA_HYP:     " + SMA_HYP.
+    print "HYP_ECC:     " + HYP_ECC.
+    print "A_ANGLE:       " +  A_ANGLE.
+    print "PHASE_ETA:     " + PHASE_ETA.
+    print "================================================".
+  }
   return lexicon(
     "ang", A_ANGLE,
     "eta", PHASE_ETA,
@@ -110,10 +115,7 @@ function escapeTransfer {
     set PHASE_ETA to calcPhaseETA(transfer["ang"],ORBIT_ANGLE).
     print "PHASE_ETA:  " + Round(PHASE_ETA) + "     " at (5,36).
     wait 1.
-    if PHASE_ETA < burnTime+60{
-      KUNIVERSE:TIMEWARP:CANCELWARP().
-      WAIT UNTIL SHIP:UNPACKED.
-    }
+    cancelWarpBeforeEta(PHASE_ETA, burnTime).
   }
 
   wait until steeringManager:ANGLEERROR < 1.

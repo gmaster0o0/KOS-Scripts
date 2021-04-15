@@ -29,6 +29,7 @@ if not silent {
   print "ZOS FILES:".
 }
 local zosFiles is copyFiles(list(
+  "dev",
   "fileIO",
   "init",
   "start",
@@ -47,18 +48,18 @@ local libfiles is copyFiles(list(
 "transfer_lib",
 "hohhman_lib",
 "rocket_utils_lib",
-"rendezvous_lib"
+"rendezvous_lib",
+"warp_lib"
 ),"lib").
 if not silent {
   print "-----------------------------------:" + libfiles.
   print "MISSIONS:".
 }
 local missionfiles is copyFiles(list(
-"kerbintours",
 "parkingOrbit",
-"flybymun",
-"transferTo",
-"rescue"
+"return",
+"rescue",
+"transferTo"
 ),"missions").
 print "-----------------------------------:" + missionfiles.
 print zosFiles + missionfiles + libfiles + " bytes copied".
