@@ -5,11 +5,11 @@ runPath("../lib/launch_lib.ks").
 runPath("../lib/landing_lib.ks").
 runPath("../lib/rocket_utils_lib.ks").
 runPath("../lib/hohhman_lib.ks").
+runPath("../lib/warp_lib.ks").
 
 clearScreen.
 parameter missionStatus is 0.
 parameter targetApo is 80000.
-loaddist(100000).
 print "========KERBINTOURS========".
 print "APOAPSIS:".
 print "PERIAPSIS:".

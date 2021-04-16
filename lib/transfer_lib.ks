@@ -23,6 +23,7 @@ function waitForTransferWindow {
     print round(targetAng,1) at (25,1).
     print round(ETAofTransfer,1) at (25,2).
     print round(angleChangeRate,2) at (25,3).
+    cancelWarpBeforeEta(ETAofTransfer, bt).
   }
 }
 
@@ -164,7 +165,7 @@ function waitToEncounter {
 function waitUntilLeaveSOI {
   parameter home is "KERBIN".
   local OldSOI is body:name.
-  wait until body:name = home.
+  wait until body:name <> home.
   printO("TRANSFER",OldSOI + "Vonzáskörzete elhagyva").
 }
 

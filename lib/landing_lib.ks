@@ -1,9 +1,10 @@
 
 function deOrbitBurn {
+  parameter targetPeri is 20000.
   printO("LANDING","Periapsis csokkentese").
   lock  throttle to 1.
   lock steering to retrograde.
-  until  periapsis < 20000 {
+  until  periapsis < targetPeri {
     flightData().
     checkBoosters().
   }

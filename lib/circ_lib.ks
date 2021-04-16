@@ -5,7 +5,7 @@ function waitToApoapsis {
   lock  throttle to 0.
   printO("CIRC","Varunk aming az apoapsishoz erunk").
   until eta:apoapsis < lead {
-    flightData().
+    cancelWarpBeforeEta(eta:apoapsis,lead).
   }
 }
 
@@ -15,7 +15,7 @@ function waitToPeriapsis {
   lock  throttle to 0.
   printO("CIRC","Varunk aming az periapsishoz erunk").
   until eta:periapsis < lead {
-    flightData().
+    cancelWarpBeforeEta(eta:periapsis,lead).
   }
 }
 
