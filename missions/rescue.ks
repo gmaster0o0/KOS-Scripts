@@ -7,9 +7,12 @@ runPath("../lib/rocket_utils_lib.ks").
 runPath("../lib/hohhman_lib.ks").
 runPath("../lib/rendezvous_lib.ks").
 runPath("../lib/transfer_lib.ks").
+runPath("../lib/utils_lib.ks").
+runPath("../lib/wait_lib.ks").
+runPath("../lib/warp_lib.ks").
 
 parameter missionStatus is 1.
-parameter targetApo is 80000.
+local targetApo is target:apoapsis.
 
 if missionStatus = 1{
   launch(3).

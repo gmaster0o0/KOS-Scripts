@@ -1,24 +1,3 @@
-
-function waitToApoapsis {
-  parameter lead is 10.
-
-  lock  throttle to 0.
-  printO("CIRC","Varunk aming az apoapsishoz erunk").
-  until eta:apoapsis < lead {
-    cancelWarpBeforeEta(eta:apoapsis,lead).
-  }
-}
-
-function waitToPeriapsis {
-  parameter lead is 10.
-
-  lock  throttle to 0.
-  printO("CIRC","Varunk aming az periapsishoz erunk").
-  until eta:periapsis < lead {
-    cancelWarpBeforeEta(eta:periapsis,lead).
-  }
-}
-
 function raisePeriapsis {
   parameter targetPeri is apoapsis.
   parameter errorTreshold is 1.05.
@@ -27,11 +6,11 @@ function raisePeriapsis {
   local bt is burnTimeForDv(dv).
   waitToApoapsis(bt/2).
 
-  printO("CIRC","Periapsis emelese:[DV:"+round(dv,1)+"][BT:"+round(bt,1)+"]").
+  printO("CIRC","Periapsis emelese:[DV:"+round(dv,1)+"][BT:"+round(bt,1)+"][AP:"+targetPeri+"]").
   lock throttle to 1.
   lock steering to circPrograde().
   until status = "ORBITING" and (
-    orbit:eccentricity < 0.0005 or 
+    (orbit:eccentricity < 0.0005 and isCloseTo(targetPeri,periapsis,targetPeri*0.01)) or
     periapsis > targetPeri*errorTreshold or
     apoapsis > targetPeri * errorTreshold
   ) {
@@ -49,7 +28,7 @@ function raisePeriapsis {
 function lowerApoapsis {
   parameter targetApo is periapsis.
   parameter errorTreshold is 0.95.
-
+  print targetApo.
   local dv to deltaVToPeriapsis().
   local bt to burnTimeForDv(dv).
   
@@ -60,13 +39,20 @@ function lowerApoapsis {
   printO("CIRC", "Gyorsítás a körpálya eléréséhez. DV:" + round(dv,1) + "  BT:"+round(bt)).
   local th to 1.
   lock throttle to th.
+  local startPeri is periapsis.
   until status="ORBITING" and (
-    periapsis < targetApo*errorTreshold or 
-    apoapsis < targetApo*errorTreshold or 
+    periapsis < startPeri*errorTreshold or 
+    (apoapsis < targetApo*errorTreshold and apoapsis > 0) or 
     orbit:eccentricity < 0.0005
   ) {
+    print apoapsis at (10,10).
+    print targetApo*errorTreshold  at (10,11).
+    print periapsis < startPeri*errorTreshold  at (10,12).
+    print apoapsis < targetApo*errorTreshold and apoapsis > 0  at (10,13).
+    print orbit:eccentricity < 0.0005  at (10,14).
     set th to burnTimeForDv(deltaVToPeriapsis()).
     checkBoosters().
+    wait 0.1.
   }
   printO("CIRC", "Körpálya elérve:" + round(obt:eccentricity,7)).
   lock throttle to 0.
@@ -99,4 +85,3 @@ function circRetrograde {
   }
   return retrograde:vector + r(0,min(orbit:period - eta:periapsis,threshold),0).
 }
-

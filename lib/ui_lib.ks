@@ -16,9 +16,9 @@ function countDown {
 }
 
 function flightData {
-  print apoapsis at (15,1).
-  print periapsis at (15,2).
-  print altitude at (15,3).
+  print apoapsis at (60,1).
+  print periapsis at (60,2).
+  print altitude at (60,3).
 }
 
 function drawVec {

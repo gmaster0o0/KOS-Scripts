@@ -1,0 +1,1 @@
+runOncePath("0:/zurugynokseg/ZOS/init.ks"). 

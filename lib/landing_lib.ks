@@ -5,17 +5,8 @@ function deOrbitBurn {
   lock  throttle to 1.
   lock steering to retrograde.
   until  periapsis < targetPeri {
-    flightData().
+    //flightData().
     checkBoosters().
-  }
-}
-
-function waitToEnterToATM {
-  printO("LANDING","Varunk aming az atmoszferaba erunk").
-  lock  throttle to 0.
-  lock steering to retrograde.
-  until altitude < body:atm:height {
-    flightData().
   }
 }
 
@@ -28,4 +19,15 @@ function reachSafeLandingSpeed {
     checkBoosters().
   }
   lock  throttle to 0.
+}
+
+function doSafeParachute {
+  lock steering to srfRetrograde.     
+  until status = "LANDED" or status = "SPLASHED" {
+    if NOT chutesSafe and altitude < body:atm:height and verticalSpeed < 0 {
+        print("STAGING:Ejtőernyő kinyitva").
+        chutesSafe ON.
+        gear ON.
+    }
+  }
 }

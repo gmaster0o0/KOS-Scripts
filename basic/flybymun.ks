@@ -6,6 +6,9 @@ runPath("../lib/landing_lib.ks").
 runPath("../lib/rocket_utils_lib.ks").
 runPath("../lib/hohhman_lib.ks").
 runPath("../lib/transfer_lib.ks").
+runPath("../lib/utils_lib.ks").
+runPath("../lib/wait_lib.ks").
+runPath("../lib/warp_lib.ks").
 
 parameter missionStatus is 0.
 parameter targetBody is "MUN".
