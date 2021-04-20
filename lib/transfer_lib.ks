@@ -12,6 +12,7 @@ function waitForTransferWindow {
   local ETAofTransfer to (getTargetAngle() - hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
+  addalarm("raw", time:seconds + ETAofTransfer - bt - 120, "Transfer window", "Ready for transfer").
   lock steering to prograde.
   until ETAofTransfer < bt/2 {
     wait 1.
@@ -23,11 +24,12 @@ function waitForTransferWindow {
     print round(targetAng,1) at (25,1).
     print round(ETAofTransfer,1) at (25,2).
     print round(angleChangeRate,2) at (25,3).
+    cancelWarpBeforeEta(ETAofTransfer, bt).
   }
 }
 
 function calculateReturnTransfer {
-  parameter PE_GOAL is 30000.
+  parameter PE_GOAL is 50000.
 
   //Kerbin Arrival Orbit 
   local RET_AP to body:altitude + body:body:radius.
@@ -106,6 +108,9 @@ function escapeTransfer {
   lock steering to prograde.
   local burnTime to burnTimeForDv(transfer["dv"]).
   local PHASE_ETA is transfer["eta"].
+
+  addalarm("raw", time:seconds + PHASE_ETA - burnTime - 120, "Return window", "Ready for transfer").
+
   //local testnode to node(time:seconds + transfer["eta"], 0, 0, transfer["dv"]).
   //add testnode.
   until (PHASE_ETA < burnTime/2) {
@@ -139,33 +144,27 @@ function escapeTransfer {
 }
 
 function doOrbitTransfer {
+  parameter PE_GOAL is 40000.
+
   lock steering to prograde.
   wait until steeringManager:ANGLEERROR < 1.
   local th is 1.
   lock throttle to th.
   printO("TRANSFER","Pályamódosítás megkezdése").
-  until apoapsis > target:apoapsis {
+  local DONE is false.
+  until apoapsis > target:apoapsis or DONE {
     if(apoapsis /target:apoapsis > 0.9){
       set th to max(0.05,1-(apoapsis/target:apoapsis)).
     }else {
       set th to 1.
     }
     checkBoosters().
+    if obt:hasNextPatch {
+      set DONE to obt:nextPatch:periapsis < PE_GOAL.
+    }
   }
   printO("TRANSFER","Pályamódosítás befejezve:"+ round(apoapsis)).
   unlock all.
-}
-
-function waitToEncounter {
-  wait until status = "ESCAPE".
-  printO("TRANSFER",target:name + "Vonzáskörzete elérve").
-}
-
-function waitUntilLeaveSOI {
-  parameter home is "KERBIN".
-  local OldSOI is body:name.
-  wait until body:name = home.
-  printO("TRANSFER",OldSOI + "Vonzáskörzete elhagyva").
 }
 
 function avoidCollision {
@@ -188,19 +187,3 @@ function avoidCollision {
   }
   wait 2.
 }
-
-function lngToDegrees {
-  parameter lng.
-
-  return mod(lng + 360, 360).
-}
-
-function getTargetAngle {
-  return lngToDegrees(lngToDegrees(target:longitude) - lngToDegrees(ship:longitude)).
-}
-
-function utilReduceTo360 {
-	parameter ang.
-	return ang - 360 * floor(ang / 360).
-}
-

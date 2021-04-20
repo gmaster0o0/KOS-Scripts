@@ -1,4 +1,4 @@
-runOncePath("staging_lib").
+runOncePath("landing_lib").
 runOncePath("ui_lib").
 
 wait until not core:messages:empty.

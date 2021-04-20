@@ -1,27 +1,17 @@
 function launch {
   parameter countDownTime is 10.
-  if status = "PRELAUNCH" {
+  sas off.
+  if status = "PRELAUNCH" or status = "LANDED" {
     countDown(countDownTime).
     stage.
     printO("LAUNCH","Kilövés").
   }
 }
 
-function waitUntilEndOfAtmosphere {
-  printO("LAUNCH", "Várakozás amíg a hajó kiér a légkörből").
-  lock throttle to 0.
-  until altitude > body:atm:height {
-    flightData().
-  }
-  printO("LAUNCH", "Kilépés a légkörből").
-  lock steering to prograde.
-  wait 3.
-}
-
 function gravityTurn {
   parameter targetApo is 80000.
   
-  lock pitch  to max(8,90*(1-apoapsis/body:atm:height)).
+  lock pitch  to getPitch(targetApo).
   lock steering to heading(90,pitch).
   lock throttle to 1.
   printO("LAUNCH", "Emelkedés "+targetApo + "m").
@@ -29,5 +19,13 @@ function gravityTurn {
     flightData().
     checkBoosters().
   }
+}
+
+function getPitch {
+  parameter targetApo.
+  if body:atm:height > 0 {
+     max(8,90*(1-apoapsis/body:atm:height)).
+  }
+  return max(3,90*(1-apoapsis/targetApo)).
 }
  
