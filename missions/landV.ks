@@ -8,6 +8,8 @@ runPath("../lib/warp_lib.ks").
 
 parameter verbose is true.
 
+local vecDrawLex is lex().
+
 function waitForStart {
   clearVecDraws().
   clearScreen.
@@ -36,6 +38,7 @@ function createDisplay {
     print "P_INP" at (40,10).
     print "StopTime" at (40,11).
     print "SurfaceSpeed" at (40,12).
+    print "Slope" at (40,13).
   }
 }
 
@@ -55,16 +58,23 @@ function killhorizontalspeed {
 }
 
 function fdata {
-    parameter stopDistance is "".
+  parameter stopDistance is "".
 
-    local groundVelVec is vxcl(up:vector, ship:velocity:surface).
-
-    if verbose {
+  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
+  local shipVelVec is ship:velocity:surface.
+  local slope is groundSlope().
+  if verbose {
+    print maxAccUp at (60,3).
+    print gravity at (60,4).
     print verticalSpeed at (60,1).
     print ship:bounds:bottomaltradar at (60,2).
     print stopDistance at (60,8).
     print throttle at (60,9).
     print groundVelVec:mag at (60,12).
+    print slope at(60,13).
+
+    vecDrawAdd(vecDrawLex, ship:position, groundVelVec, RED,"GVV").
+    vecDrawAdd(vecDrawLex, ship:position, shipVelVec, GREEN,"SVV").
   }
 }
 
@@ -143,8 +153,77 @@ function calculateStoppingDistance {
 
   return stopDistance.
 }
+
+function activateEngines {
+  list engines in engineList.
+
+  for e in engineList {
+    if not e:flameout and not e:ignition and e:stage = stage:number {
+      e:activate().
+    }
+  }
+  
+  if(engineList:length = 1){
+    local e is engineList[0].
+    if not e:flameout and not e:ignition and e:stage+1 = stage:number {
+      doSafeStage().
+    }
+  }
+}
+
+function vecDrawAdd {
+  parameter vlex, vstart, vend, color, label,
+  scale is 1,
+  width is 0.1.
+
+  if vlex:keys:contains(label) {
+    set vlex[label]:START to vstart.
+    set vlex[label]:VEC to vend.
+    set vlex[label]:COLOR to color.
+    set vlex[label]:scale to scale.
+    set vlex[label]:width to width.
+  }else{
+    vlex:add(label,vecDraw(vstart,vend,color,label,scale,true,width)).
+  }
+}
+
+function groundSlope {
+  local center is ship:position.
+  if ADDONS:TR:HASIMPACT {
+    set center to ADDONS:TR:IMPACTPOS:position.
+  }
+  local tri is createTriangle(50,center).
+  local a is body:geopositionOf(tri["north"]).
+  local b is body:geopositionOf(tri["east"]).
+  local c is body:geopositionOf(tri["west"]).
+
+  local a_vec is a:altitudePosition(a:terrainHeight).
+  local b_vec is b:altitudePosition(b:terrainHeight).
+  local c_vec is c:altitudePosition(c:terrainHeight).
+
+  vecDrawAdd(vecDrawLex,ship:position,a_vec,WHITE,"a_vec").
+  vecDrawAdd(vecDrawLex,ship:position,b_vec,WHITE,"b_vec").
+  vecDrawAdd(vecDrawLex,ship:position,c_vec,WHITE,"c_vec").
+
+  local slopeNormVec is  vectorCrossProduct(c_vec - a_vec, b_vec - a_vec):normalized.
+  return vang(slopeNormVec, center - body:position).
+}
+
+function createTriangle {
+  parameter height is 10.
+  parameter center is ship:position.
+
+  local east is vectorCrossProduct(north:vector, up:vector) * height * sin(60) .
+  return lexicon(
+    "north", center + height * north:vector,
+    "east", center - height * cos(60) * north:vector + east,
+    "west", center - height * cos(60) * north:vector - east
+  
+  ).
+} 
 //STARTING HERE
 waitForStart().
+activateEngines().
 deOrbitBurn(0).
 killhorizontalspeed().
 suicideburn().
