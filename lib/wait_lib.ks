@@ -26,6 +26,9 @@ function waitToEnterToATM {
   until altitude < body:atm:height {
     flightData().
   }
+
+  panels off.
+  //retractAntenna().
 }
 
 function waitUntilEndOfAtmosphere {
@@ -36,7 +39,13 @@ function waitUntilEndOfAtmosphere {
   }
   printO("LAUNCH", "Kilépés a légkörből").
   lock steering to prograde.
-  wait 3.
+  wait until steeringManager:ANGLEERROR < 1.
+
+  deployFairing().
+  wait 2.
+  panels on.
+  rcs on.
+  //extendAntenna().
 }
 
 function waitToEncounter {

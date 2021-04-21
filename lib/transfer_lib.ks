@@ -9,9 +9,10 @@ function waitForTransferWindow {
   local bt to burnTimeForDv(dv).
   local ht to hohmanmTime().
 
-  local ETAofTransfer to (getTargetAngle() - hohmanmTime()) / angleChangeRate.
+  local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
+  printO("TRANSFER","ETA" + round(ETAofTransfer,1)).
   addalarm("raw", time:seconds + ETAofTransfer - bt - 120, "Transfer window", "Ready for transfer").
   lock steering to prograde.
   until ETAofTransfer < bt/2 {
@@ -20,10 +21,10 @@ function waitForTransferWindow {
     set sAngVel to 360/ship:obt:period.
     local targetAng to getTargetAngle().
     set angleChangeRate to abs(tAngVel-sAngVel).
-    set ETAofTransfer to (getTargetAngle() - hohmanmTime()) / angleChangeRate.
-    print round(targetAng,1) at (25,1).
-    print round(ETAofTransfer,1) at (25,2).
-    print round(angleChangeRate,2) at (25,3).
+    set ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
+    print round(targetAng,1) at (60,1).
+    print round(ETAofTransfer,1) at (60,2).
+    print round(angleChangeRate,2) at (60,3).
     cancelWarpBeforeEta(ETAofTransfer, bt).
   }
 }

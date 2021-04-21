@@ -15,7 +15,7 @@ function lngToDegrees {
 }
 
 function getTargetAngle {
-  return lngToDegrees(lngToDegrees(target:longitude) - lngToDegrees(ship:longitude)).
+  return lngToDegrees(lngToDegrees(lngToDegrees(target:longitude) - lngToDegrees(ship:longitude))).
 }
 
 function utilReduceTo360 {
