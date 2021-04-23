@@ -61,6 +61,7 @@ function copyAllFilesToBoot {
   "utils_lib",
   "wait_lib",
   "warp_lib"
+  "docking_lib"
   ),"lib").
   if not silent {
     print "-----------------------------------:" + libfiles.
@@ -71,7 +72,8 @@ function copyAllFilesToBoot {
   "return",
   "rescue",
   "landV",
-  "transferTo"
+  "transferTo",
+  "dock"
   ),"missions").
   print "-----------------------------------:" + missionfiles.
   print zosFiles + missionfiles + libfiles + " bytes copied".
