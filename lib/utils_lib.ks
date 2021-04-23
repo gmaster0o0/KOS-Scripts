@@ -22,3 +22,9 @@ function utilReduceTo360 {
 	parameter ang.
 	return ang - 360 * floor(ang / 360).
 }
+function signAngle {
+	parameter v1.
+	parameter v2.
+	parameter pn.
+	return arcTan2(vDot(vCrs(v1,v2),pn),vDot(v1,v2)).
+}
