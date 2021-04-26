@@ -62,10 +62,8 @@ function circPrograde {
   parameter threshold is 30.
 
   if(eta:apoapsis < eta:periapsis){
-    //print "-30..0" + r(0,max(-eta:apoapsis,-threshold),0) at (0,30).
     return prograde:vector + r(0,max(-eta:apoapsis,-threshold),0).
   }
-  //print "0..30" + r(0,min(orbit:period - eta:apoapsis,threshold),0) at (0,31).
   return prograde:vector + r(0,min(orbit:period - eta:apoapsis,threshold),0).
 }
 
@@ -74,10 +72,8 @@ function circRetrograde {
 
   if orbit:eccentricity > 1 {
     if eta:periapsis > 0 {
-      //print "-30..0 + r(0,max(-eta:periapsis,-30),0).
       return retrograde:vector + r(0,max(-eta:periapsis,-threshold),0).
     }
-    //print "0..30" + r(0,min(-eta:periapsis,30),0).
     return retrograde:vector + r(0,min(-eta:periapsis,threshold),0).
   }
   if eta:periapsis < eta:apoapsis {

@@ -12,6 +12,7 @@ runPath("../lib/warp_lib.ks").
 clearScreen.
 parameter missionStatus is 0.
 parameter targetApo is 80000.
+parameter unpack is true.
 
 print "========KERBINTOURS========".
 print "APOAPSIS:".
@@ -28,7 +29,7 @@ if(missionStatus = 1) {
   set missionStatus to 2.
 }
 if(missionStatus = 2) {
-  waitUntilEndOfAtmosphere().
+  waitUntilEndOfAtmosphere(unpack).
   set missionStatus to 3.
 }
 if(missionStatus = 3) {

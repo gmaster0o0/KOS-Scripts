@@ -5,7 +5,6 @@ function deOrbitBurn {
   lock  throttle to 1.
   lock steering to retrograde.
   until  periapsis < targetPeri {
-    //flightData().
     checkBoosters().
   }
 }

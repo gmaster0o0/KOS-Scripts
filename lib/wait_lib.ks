@@ -32,6 +32,8 @@ function waitToEnterToATM {
 }
 
 function waitUntilEndOfAtmosphere {
+  parameter autoDeploy is true.
+
   printO("LAUNCH", "Várakozás amíg a hajó kiér a légkörből").
   lock throttle to 0.
   until altitude > body:atm:height {
@@ -40,12 +42,13 @@ function waitUntilEndOfAtmosphere {
   printO("LAUNCH", "Kilépés a légkörből").
   lock steering to prograde.
   wait until steeringManager:ANGLEERROR < 1.
-
-  deployFairing().
-  wait 2.
-  panels on.
-  rcs on.
-  //extendAntenna().
+  if autoDeploy {
+    deployFairing().
+    wait 2.
+    panels on.
+    rcs on.
+    //extendAntenna().
+  }
 }
 
 function waitToEncounter {

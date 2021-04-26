@@ -65,7 +65,12 @@ function getFileSize {
   parameter namespace.
   parameter vol.
   
-  return vol:open(listToPath(list(rootDir,namespace,f))):size.
+  local vf is vol:open(listToPath(list(rootDir,namespace,f))).
+
+  if vf:istype("boolean"){
+    return 0.
+  }
+  return vf:size.
 }
 
 function calculateFileSpace {

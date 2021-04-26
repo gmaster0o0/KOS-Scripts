@@ -8,11 +8,23 @@ function getBoosterProcessors {
         set maxStage to p:part:decoupledin.
         procList:clear().
       }
-      set p:part:tag to p:part:uid.
-      procList:add(p:part).
+      if p:bootfilename = "/boot/booster.ks"{
+        set p:part:tag to p:part:uid.
+        procList:add(p:part).
+      }
     }
   }
   return procList.
+}
+
+function getSolarProcessor {
+  list processors in processorList.
+  for p in processorList {
+    if p:bootfilename = "/boot/solar.ks"{
+      set p:part:tag to "Solar".
+      return p.
+    }
+  }
 }
 
 function doBoosterStaging {
@@ -73,10 +85,30 @@ function checkBoosters {
     for p in procs {
       doBoosterStaging(p).
     }
-    doSafeStage().
+    if stage:number > 0{
+      doSafeStage().
+    }
   }
   wait 1.
 }
+
+function activateEngines {
+  list engines in engineList.
+
+  for e in engineList {
+    if not e:flameout and not e:ignition and e:stage = stage:number {
+      e:activate().
+    }
+  }
+  
+  if(engineList:length = 1){
+    local e is engineList[0].
+    if not e:flameout and not e:ignition and e:stage+1 = stage:number {
+      doSafeStage().
+    }
+  }
+}
+
 
 function doSafeStage {
   wait until stage:ready.
@@ -94,16 +126,16 @@ function deployFairing {
 
 function extendAntenna {
   for f in ship:modulesnamed("ModuleDeployableAntenna") {
-    if f:hasaction("extend antenna"){
-      f:doaction("extend antenna", true).
+    if f:hasevent("extend antenna"){
+      f:doevent("extend antenna").
     }
   }
 }
 
 function retractAntenna {
   for f in ship:modulesnamed("ModuleDeployableAntenna") {
-    if f:hasaction("retract antenna"){
-      f:doaction("retract antenna", true).
+    if f:hasevent("retract antenna"){
+      f:doevent("retract antenna").
     }
   }
 }

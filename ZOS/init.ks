@@ -1,7 +1,7 @@
 CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Open Terminal").
 
 set terminal:width to 100.
-set terminal:height to 40.
+set terminal:height to 50.
 
 local silent is true.
 clearScreen.
@@ -60,8 +60,10 @@ function copyAllFilesToBoot {
   "ui_lib",
   "utils_lib",
   "wait_lib",
-  "warp_lib"
-  "docking_lib"
+  "warp_lib",
+  "docking_lib",
+  "vecDraw_lib",
+  "landVac_lib"
   ),"lib").
   if not silent {
     print "-----------------------------------:" + libfiles.
@@ -73,7 +75,8 @@ function copyAllFilesToBoot {
   "rescue",
   "landV",
   "transferTo",
-  "dock"
+  "dock",
+  "station"
   ),"missions").
   print "-----------------------------------:" + missionfiles.
   print zosFiles + missionfiles + libfiles + " bytes copied".

@@ -27,9 +27,8 @@ function hohmanmTime {
 	local pt is 0.5 * ((r1 + r2) / (2 * r2)) ^ 1.5.
 	local ft is pt - floor(pt).
 
-	// angular distance that target will travel during transfer
 	local theta is 360 * ft.
-	// necessary phase angle for vessel burn
+
 	local phi is 180 - theta.
 	return phi.
 }

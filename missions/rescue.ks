@@ -14,23 +14,12 @@ runPath("../lib/warp_lib.ks").
 parameter missionStatus is 1.
 local targetApo is target:apoapsis.
 
-if missionStatus = 1{
-  launch(3).
-  set missionStatus to 2.
-}
-if missionStatus = 2 {
-  gravityTurn(targetApo).
-  set missionStatus to 3.
-}
-if missionStatus = 3 {
-  waitUntilEndOfAtmosphere().
-  set missionStatus to 4.
-}
-  
-if missionStatus = 4 {
-  raisePeriapsis(targetApo).
+//LAUNCH TO PARKING ORBIT.
+if missionStatus < 5 {
+  run parkingOrbit(0,targetApo).
   set missionStatus to 5.
 }
+clearScreen.
 
 if missionStatus = 5 {
   changePeriod().
@@ -38,7 +27,7 @@ if missionStatus = 5 {
 }
 
 if missionStatus = 6 {
-  approcheTarget(10).
+  approcheTarget(100).
   set missionStatus to 7.
 }
 

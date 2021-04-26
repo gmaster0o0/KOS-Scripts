@@ -42,7 +42,6 @@ function waitTheClosestDistance {
     }
     set diff to prev - target:distance.
 
-    //velocityVectorsDraw().
   }
   printO("REND", "Legkisebb tavolsag elerve:" + target:distance).
   CLEARVECDRAWS().
@@ -65,12 +64,10 @@ function killRelVel {
     set relVelVec to target:velocity:orbit - ship:velocity:orbit.
     set th to relVelVec:mag / (ship:availableThrust/ship:mass).
     lock throttle to th.
-    //velocityVectorsDraw().
   }
 
   lock throttle to 0.
   printO("REND", "Relativ sebesseg eliminalva. Hiba:" + relVelVec:mag).
-  CLEARVECDRAWS().
 
   return maxSpeed.
 }
@@ -99,11 +96,8 @@ function decreaseDistance {
   {
     set relVelVec to target:velocity:orbit - ship:velocity:orbit.
     set th to getThrottle(turningTime, startDistance,relVelVec:mag).
-
-    //positionVectorsDraw().
   }
   lock throttle to 0.
-  CLEARVECDRAWS().
   printO("REND", "Új távolság:" + target:distance).
   lock steering to relVelVec.
   wait turningTime.
@@ -127,15 +121,13 @@ function getThrottle {
   parameter d0 is 50.
   parameter v0 is 0.
 
-  //d = vi*t + (a*t^2)/2 ==>
-  //a = 2*(d - vi*t) / t^2
   local maxAcc is 2 * (d0 + v0*maxBurningTime) / maxBurningTime^2.
   local enginesAcc is ship:availablethrust/ ship:mass.
 
   return maxAcc / enginesAcc.
 }
 
-function approcheTarget {
+function  approcheTarget {
   parameter distanceGoal is 50.
 
   waitTheClosestDistance().
@@ -154,82 +146,4 @@ function finishRendezvous {
   wait 3.
   unlock all.
   sas on.
-}
-
-function velocityVectorsDraw {
-  parameter vectorSize is 0.5.
-
-  CLEARVECDRAWS().
-  local shipVV TO VECDRAW(
-    V(0,0,0),
-    ship:velocity:orbit,
-    RED,
-    "SV",
-    vectorSize,
-    TRUE,
-    0.2,
-    TRUE,
-    TRUE
-  ).
-  local shipTV TO VECDRAW(
-    V(0,0,0),
-    target:velocity:orbit,
-    GREEN,
-    "TV",
-    vectorSize,
-    TRUE,
-    0.2,
-    TRUE,
-    TRUE
-  ).
-  local shipSubV TO VECDRAW(
-    V(0,0,0),
-    target:velocity:orbit - ship:velocity:orbit,
-    BLUE,
-    "BURN",
-    vectorSize,
-    TRUE,
-    0.2,
-    TRUE,
-    TRUE
-  ).
-}
-
-function positionVectorsDraw {
-  parameter vectorSize is 0.5.
-
-    CLEARVECDRAWS().
-    local shipVV TO VECDRAW(
-    V(0,0,0),
-    ship:velocity:orbit,
-    RED,
-    "SV",
-    vectorSize,
-    TRUE,
-    0.2,
-    TRUE,
-    TRUE
-  ).
-  local shipTV TO VECDRAW(
-    V(0,0,0),
-    target:position,
-    GREEN,
-    "TV",
-    vectorSize,
-    TRUE,
-    0.2,
-    TRUE,
-    TRUE
-  ).
-  local shipSubV TO VECDRAW(
-    V(0,0,0),
-    target:position,
-    BLUE,
-    "Burn",
-    vectorSize,
-    TRUE,
-    0.2,
-    TRUE,
-    TRUE
-  ).
 }

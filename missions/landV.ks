@@ -12,7 +12,4 @@ runPath("../lib/vecDraw_lib.ks").
 waitForStart().
 activateEngines().
 deOrbitBurn(0).
-killhorizontalspeed().
 suicideburn().
-
-//+final touch

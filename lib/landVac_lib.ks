@@ -28,138 +28,142 @@ function createDisplay {
     print "breakingDistance" at (40,8).
     print "throttle" at (40,9).
     print "P_INP" at (40,10).
-    print "StopTime" at (40,11).
     print "SurfaceSpeed" at (40,12).
     print "Slope" at (40,13).
   }
+}
+
+//calc gravity over altitude
+function gravity {
+  parameter h is altitude.
+  return body:mu / (body:radius + h) ^ 2.
+}
+//calc max acceleration over altitude
+function maxAccUp {
+  parameter h is altitude.
+
+  local shipMaxAcceleration is ship:availablethrust / ship:mass.
+  return shipMaxAcceleration - (gravity(0) + gravity(h)).
+}
+//calc avarage gravity between 2 point
+function avgGrav {
+  parameter startAlt is altitude.
+  parameter dist is altitude.
+
+  return (gravity(startAlt) + gravity(startAlt - dist))/2.
+}
+
+//calc stopping distance. Basic kinetic EQs
+function calculateStoppingDistance {
+  //t=v/a
+  // d = 1/2 *a* t^2
+  // d = (g/a)*h.
+  local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
+  print compensation at (60,17).
+  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
+  local stopDistanceX is groundVelVec:mag^2 / (2 * (ship:availablethrust/ship:mass)).
+  local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
+  print stopDistanceX at (60,14).
+  print stopDistanceY at (60,15).
+  local stopDistance is sqrt(stopDistanceX^2+stopDistanceY^2).
+    
+  fdata(stopDistance).
+
+  return stopDistance.
+}
+//performing suicid burn in 2 step.
+//1st is hard slow down until a hover alt
+//2nd state is just hover and slowly touch down
+function suicideBurn {
+  parameter hoverSpeed is -1.
+
+  local minAlt is 1.
+  local breakingPID to PIDLOOP(0.5,0.1,0.05,0,1).
+  breakingPID:reset().
+  set breakingPID:SETPOINT to minALT.
+  
+  local th is 0.
+  local st is srfRetrograde.
+  lock throttle to th.
+  lock steering to st.
+  rcs on.
+  panels off.
+  gear on.
+
+  local done to false.
+  until done {
+    print "SUICID BURN" at (60,0).
+    print breakingPID:input at (60,10).
+    local groundDistance is ship:bounds:bottomaltradar-minALT.
+    local stopDist is calculateStoppingDistance().
+    vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface,YELLOW,"BV").
+    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
+    vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)),RED,"VS").
+    set th to breakingPID:UPDATE(time:seconds,groundDistance - stopDist).
+    set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
+    set done to groundDistance < minALT.
+  }
+  breakingPID:reset().
+  set breakingPID:setpoint to hoverSpeed.
+  lock steering to (up:vector*alt:radar) - ship:velocity:surface.
+  until status = "LANDED"{
+    vecDrawAdd(vecDrawLex,ship:position,(up:vector*20) - ship:velocity:surface,YELLOW,"BV").
+    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
+    vecDrawAdd(vecDrawLex,ship:position,(up:vector*20),RED,"VS").
+    print "FINAL TOUCH     " at (60,0).
+    print breakingPID:input at (60,10).
+    set th to breakingPID:UPDATE(time:seconds,verticalSpeed).
+    wait 0.
+  }
+  print "LANDED      " at (60,0).
+  wait 2.
+  unlock all.
+  sas on.
+  wait 5.
+  panels on.
+  rcs off.
+}
+
+//display fligth data
+function fdata { 
+  parameter stopDistance is "",
+  bt is "",
+  ffs is "".
+
+  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
+  //local surfVelVec is ship:velocity:surface.
+  if verbose {
+    print verticalSpeed at (60,1).
+    print ship:bounds:bottomaltradar at (60,2).
+    print maxAccUp(altitude) at (60,3).
+    print gravity(altitude) at (60,4).
+    print ffs at (60,5).
+    //print calcImpactTime() at (60,6).
+    print bt at (60,7).
+    print stopDistance at (60,8).
+    print throttle at (60,9).
+    print groundVelVec:mag at (60,12).
+    print groundSlope() at (60,13).
+    print vang(-up:vector, ship:velocity:surface) at (60,16).
+  }
+
+  //vecDrawAdd(vecDrawLex,ship:position,-up:vector*50,RED,"GVV").
+  //vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"velVec").
 }
 
 function killhorizontalspeed {
   print "KILL HORIZONTAL SPEED" at (60,0).
   local th is 0.
   lock throttle to th.
-
-  lock groundVelVec to vxcl(up:vector, ship:velocity:surface).
   lock steering to verticalSpeed * up:vector - ship:velocity:surface.
   wait until steeringManager:ANGLEERROR < 1.
 
-  until groundVelVec:mag < 3 {
+  local done is false.
+  until done {
+    local groundVelVec to vxcl(up:vector, ship:velocity:surface).
     set th to groundVelVec:mag / 10.
     fdata().
-  }
-}
-
-function fdata {
-  parameter stopDistance is "".
-
-  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
-  local shipVelVec is ship:velocity:surface.
-  local slope is groundSlope().
-  if verbose {
-    print maxAccUp at (60,3).
-    print gravity at (60,4).
-    print verticalSpeed at (60,1).
-    print ship:bounds:bottomaltradar at (60,2).
-    print stopDistance at (60,8).
-    print throttle at (60,9).
-    print groundVelVec:mag at (60,12).
-    print slope at(60,13).
-
-    vecDrawAdd(vecDrawLex, ship:position, groundVelVec, RED,"GVV").
-    vecDrawAdd(vecDrawLex, ship:position, shipVelVec, GREEN,"SVV").
-  }
-}
-
-function suicideBurn {
-  parameter hoverSpeed is -1.
-
-  local th is 0.
-  lock throttle to th.
-  
-  local minAlt is 1.
-
-  local suicidePID to pidLoop(0.5,0.05,0.05,0,1).
-  set suicidePID:setpoint to minAlt.
-
-  rcs on.
-  panels off.
-  gear on.
-
-  local done is false.
-  lock steering to srfRetrograde.
-
-  until done {
-    print "SUICIDE BURN" at (60,0).
-    local groundDistance to ship:bounds:bottomaltradar-minALT.
-
-    set th to suicidePID:update(time:seconds,groundDistance - calculateStoppingDistance()).
-    print suicidePID:input at (60,10).
-    set done to abs(verticalSpeed) < 5 and groundDistance < minAlt.
-  }
-
-  suicidePID:reset().
-  set suicidePID:setpoint to hoverSpeed.
-  lock steering to up:vector*alt:radar - ship:velocity:surface.
-
-  until status = "LANDED" {
-    print "FINAL TOUCH" at (60,0).
-    print suicidePID:input at (60,10).
-    set th to suicidePID:update(time:seconds,verticalSpeed).
-  }
-  set th to 0.
-  print "LANDED" at (60,0).
-  wait 1.
-  unlock all.
-  sas on.
-  wait 3.
-  panels on.
-  rcs off.
-}
-
-function gravity {
-  parameter h is altitude.
-  return body:mu / ( body:radius+ h) ^2.
-}
-
-function avgGrav {
-  parameter startAlt is altitude.
-  parameter dist is altitude.
-
-  return (gravity(startAlt) + gravity(startAlt-dist))/2.
-}
-
-function maxAccUp {
-  parameter h is altitude.
-  // F = m*a
-  local shipMaxAcceleration is ship:availablethrust / ship:mass.
-  return shipMaxAcceleration - avgGrav(h,h).
-}
-
-function calculateStoppingDistance {
-  //t= v/a
-  // d = 1/2 * a * t*t
-  local stopTime is abs(verticalSpeed) / maxAccUp().
-  print stopTime at (60,11).
-  local stopDistance is 1/2 * maxAccUp() * stopTime^2.
-  fdata(stopDistance).
-
-  return stopDistance.
-}
-
-function activateEngines {
-  list engines in engineList.
-
-  for e in engineList {
-    if not e:flameout and not e:ignition and e:stage = stage:number {
-      e:activate().
-    }
-  }
-  
-  if(engineList:length = 1){
-    local e is engineList[0].
-    if not e:flameout and not e:ignition and e:stage+1 = stage:number {
-      doSafeStage().
-    }
+    set done to groundVelVec:mag < 3.
   }
 }
 

@@ -46,9 +46,6 @@ function getDistanceVec {
   local dockingPort is ship:dockingports[0].
   local targetPort is target:dockingports[0].
   local offsetVec is targetPort:portfacing:foreVector * offset.
-  if drawVec {
-    //vecDrawAdd(vecDrawLex, targetPort:position, offsetVec, cyan,"offsetVec").
-  }
   local distanceVec is targetPort:nodePosition - dockingPort:nodePosition + offsetVec.
   if drawVec {
     vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec, blue,"distanceVec").
@@ -186,7 +183,7 @@ function resetShipControl {
 function calcVelVecFromDistance{
   parameter distanceVec.
   parameter speedLimit is 5.
-  parameter acceleration is 1.
+  parameter acceleration is 0.2.
 
 	local targetVel IS MIN(sqrt(2 * distanceVec:MAG / acceleration) * acceleration,speedLimit).
 	return distanceVec:NORMALIZED * targetVel.
