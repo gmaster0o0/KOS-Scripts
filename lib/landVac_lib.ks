@@ -33,26 +33,6 @@ function createDisplay {
   }
 }
 
-//calc gravity over altitude
-function gravity {
-  parameter h is altitude.
-  return body:mu / (body:radius + h) ^ 2.
-}
-//calc max acceleration over altitude
-function maxAccUp {
-  parameter h is altitude.
-
-  local shipMaxAcceleration is ship:availablethrust / ship:mass.
-  return shipMaxAcceleration - (gravity(0) + gravity(h)).
-}
-//calc avarage gravity between 2 point
-function avgGrav {
-  parameter startAlt is altitude.
-  parameter dist is altitude.
-
-  return (gravity(startAlt) + gravity(startAlt - dist))/2.
-}
-
 //calc stopping distance. Basic kinetic EQs
 function calculateStoppingDistance {
   //t=v/a

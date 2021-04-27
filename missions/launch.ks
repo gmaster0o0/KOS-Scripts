@@ -13,12 +13,17 @@ clearScreen.
 parameter missionStatus is 0.
 parameter targetApo is 80000.
 parameter unpack is true.
+print "=====================================" at (60,0).
+print "|APOAPSIS:    " at (60,1).
+print "|PERIAPSIS:   " at (60,2). 
+print "|ALTITUDE:    " at (60,3).
+print "|SHIP:Q:      " at (60,4).
+print "|Max Q:       " at (60,5).
+print "|TWR:         " at (60,6).
+print "=====================================" at (60,7).
+print "========Event log================================================================".
 
-print "========KERBINTOURS========".
-print "APOAPSIS:".
-print "PERIAPSIS:".
-print "ALTITUDE:".
-print "========Event log========".
+local startingDV is ship:deltaV:current.
 
 if(missionStatus = 0) {
   launch(3).
@@ -36,3 +41,5 @@ if(missionStatus = 3) {
   raisePeriapsis(targetApo).
   set missionStatus to 4.
 }
+LOG  (startingDV - ship:deltaV:current) to "0:/dv.txt". 
+print startingDV - ship:deltaV:current.

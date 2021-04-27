@@ -1,3 +1,5 @@
+local startingDV is stage:deltaV.
+
 function launch {
   parameter countDownTime is 10.
   sas off.
@@ -11,12 +13,21 @@ function launch {
 function gravityTurn {
   parameter targetApo is 80000.
   
-  lock pitch  to getPitch(targetApo).
-  lock steering to heading(90,pitch).
+  lock pitchAng  to getPitch(targetApo).
+  lock steering to heading(90,pitchAng,ship:facing:roll).
   lock throttle to 1.
+  local maxQ is 0.
   printO("LAUNCH", "Emelkedés "+targetApo + "m").
   until apoapsis > targetApo {
-    flightData().
+    print round(apoapsis) at (80,1).
+    print round(periapsis) at (80,2).
+    print round(altitude) at (80,3).
+    print round(ship:Q,5) at (80,4).
+    print round(TWR(),5) at (80,6).
+    if ship:Q > maxQ {
+      set maxQ to ship:Q.
+    }
+    print round(maxQ,5) at (80,5).
     checkBoosters().
   }
 }

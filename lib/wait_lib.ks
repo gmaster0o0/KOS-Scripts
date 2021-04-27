@@ -28,7 +28,7 @@ function waitToEnterToATM {
   }
 
   panels off.
-  //retractAntenna().
+  retractAntenna().
 }
 
 function waitUntilEndOfAtmosphere {
@@ -47,7 +47,7 @@ function waitUntilEndOfAtmosphere {
     wait 2.
     panels on.
     rcs on.
-    //extendAntenna().
+    extendAntenna().
   }
 }
 

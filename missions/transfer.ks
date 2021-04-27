@@ -28,7 +28,7 @@ if hasTarget {
 
 //LAUNCH TO PARKING ORBIT.
 if missionStatus < 5 {
-  run parkingOrbit.
+  run launch.
   set missionStatus to 5.
 }
 clearScreen.

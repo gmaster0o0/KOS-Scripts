@@ -70,11 +70,11 @@ function copyAllFilesToBoot {
     print "MISSIONS:".
   }
   local missionfiles is copyFiles(list(
-  "parkingOrbit",
+  "launch",
   "return",
   "rescue",
   "landV",
-  "transferTo",
+  "transfer",
   "dock",
   "station"
   ),"missions").

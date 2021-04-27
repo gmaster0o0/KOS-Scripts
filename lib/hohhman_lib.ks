@@ -32,3 +32,10 @@ function hohmanmTime {
 	local phi is 180 - theta.
 	return phi.
 }
+
+function inclinationDV {
+	parameter incl.
+	parameter initVel.
+
+	return 2 * initVel * sin (incl/2).
+}

@@ -54,3 +54,11 @@ function handleThrottle {
   }
   return 1.
 }
+
+function TWR {
+  return ship:availableThrust / (ship:mass * gravity(altitude)).
+}
+
+function maxTWR {
+  return ship:maxthrust / (ship:mass * gravity(altitude)).
+}

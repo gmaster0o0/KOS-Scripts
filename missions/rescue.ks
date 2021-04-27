@@ -16,7 +16,7 @@ local targetApo is target:apoapsis.
 
 //LAUNCH TO PARKING ORBIT.
 if missionStatus < 5 {
-  run parkingOrbit(0,targetApo).
+  run launch(0,targetApo).
   set missionStatus to 5.
 }
 clearScreen.
