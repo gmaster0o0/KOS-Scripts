@@ -75,8 +75,7 @@ function killRelVel {
 function decreaseDistance {
   parameter distanceGoal is 50.
   parameter maxSpeed is 300.
-
-  local turningTime is 10.
+  parameter turningTime is 10.
 
   printO("REND", "Tavolsag csokkentese:" + target:distance + " maxSpeed:"+ maxSpeed).
   lock steering to target:position.
@@ -109,7 +108,7 @@ function shipCannotStop {
 
   local relVelVec to target:velocity:orbit - ship:velocity:orbit.
   local v1 is relVelVec:mag.
-  local rotateDistance is v1* turningTime.
+  local rotateDistance is v1* turningTime*2.
   local breakingDistance is v1^2 / (2*engineAcc).
   local stoppingDistance is rotateDistance + breakingDistance.
 
@@ -129,11 +128,11 @@ function getThrottle {
 
 function  approcheTarget {
   parameter distanceGoal is 50.
-
+  parameter turningTime is 10.
   waitTheClosestDistance().
   until target:distance < distanceGoal {
     local lastVel to killRelVel().
-    decreaseDistance(distanceGoal, lastVel).
+    decreaseDistance(distanceGoal, lastVel,turningTime).
     if target:distance > 2000 {
       waitTheClosestDistance().
     }

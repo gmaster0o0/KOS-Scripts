@@ -1,3 +1,105 @@
+//return with free docking ports list for every size
+function getFreeDockingPorts {
+  parameter craft.
+
+  local ports is lex().
+  for d in craft:dockingPorts {
+    if d:state = "ready" {
+      if ports:keys:contains(d:nodeType) {
+        ports[d:nodeType]:add(d).
+      }else{
+        ports:add(d:nodeType,list(d)).
+      }
+    }
+  }
+  return ports.
+}
+
+function getTargetCraft {
+  if target:istype("dockingport"){
+    return target:ship.
+  }
+  return target.
+}
+
+//return with open docking ports which have same size
+function matchingDockingPorts {
+  local shipPorts is getFreeDockingPorts(ship).
+  local targetPorts is getFreeDockingPorts(getTargetCraft()).
+
+  local matchingPorts is lex().
+  for k in shipPorts:keys {
+    if targetPorts:keys:contains(k){
+      if matchingPorts:keys:contains(k){
+        matchingPorts[k]:add(targetPorts[k]).
+      }else{
+        matchingPorts:add(k,targetPorts[k]).
+      }
+    }
+  }
+
+  return matchingPorts.
+}
+//return with the selected dockingport
+function selectTargetPort {
+
+  if hasTarget{
+    if target:istype("vessel"){
+      return chooseTargetPort().
+    }
+    if target:istype("dockingport"){
+      return target.
+    }
+    unset target.
+    return.
+  }
+}
+//default dockingport
+//selected with "control from here"
+//or from matching docking ports
+//first size first docking port is the default.
+function getDockingPort {
+  parameter size is "default".
+  if ship:controlPart:isType("dockingport"){
+    return ship:controlPart.
+  }
+  if size = "default" {
+    set size to matchingDockingPorts():keys[0].
+  }
+  return getFreeDockingPorts(ship)[size][0].
+}
+
+function compatiblePorts {
+  local dockingPortSize is getDockingPort():nodetype.
+  return  matchingDockingPorts()[dockingPortSize].
+}
+
+function chooseTargetPort {
+  local targetPorts is compatiblePorts().
+  if targetPorts:length = 1 {
+    return targetPorts[0].
+  }
+  clearscreen.
+  print "Choose docking port".
+  print "RCS=next".
+  print "abort=finish".
+  local selectedPort is targetPorts[0].
+  local counter is 0.
+  until abort {
+    if rcs {
+      set counter to mod(counter + 1, targetPorts:length).
+      set selectedPort to targetPorts[counter].
+      set target to selectedPort.
+      print "["+counter+"]"+selectedPort.
+      rcs off.
+    }
+  }
+  rcs off.
+  abort off.
+
+  return selectedPort.
+}
+
 local vecDrawLex is lex().
 
 function vectorToAxis {
@@ -14,18 +116,6 @@ function vectorToAxis {
   ).
 }
 
-function portSelected {
-  if hasTarget and target:istype("dockingport"){
-    print "choose a matching size" at (60,0).
-    return checkPortSize().
-  }
-}
-
-function checkPortSize {
-  local shipPort is ship:dockingports[0].
-  return shipPort:nodetype = target:nodetype.
-}
-
 function checkRelVel {
   local relVelVec to getRelVelVec().
   if relVelVec:mag > 0.01 {
@@ -34,7 +124,9 @@ function checkRelVel {
 }
 
 function getRelVelVec {
-  local relVelVec is target:velocity:orbit - ship:velocity:orbit.
+  local targetCraft is getTargetCraft().
+
+  local relVelVec is targetCraft:velocity:orbit - ship:velocity:orbit.
   print round(relVelVec:mag,3) at (60,2).
   return relVelVec.
 }
@@ -43,8 +135,10 @@ function getDistanceVec {
   parameter offset is 0.
   parameter drawVec is true.
 
-  local dockingPort is ship:dockingports[0].
-  local targetPort is target:dockingports[0].
+  local dockingPort is getDockingPort().
+
+  local targetPort is target.
+
   local offsetVec is targetPort:portfacing:foreVector * offset.
   local distanceVec is targetPort:nodePosition - dockingPort:nodePosition + offsetVec.
   if drawVec {
@@ -58,7 +152,7 @@ function getEvadeVec {
   parameter noGoZone is 100.
   parameter drawVec is true.
 
-  local dockingPort is ship:dockingports[0].
+  local dockingPort is getDockingPort().
   local evadeVec is getDistanceVec()- getDistanceVec(0,false):normalized * noGoZone.
   if drawVec {
     vecDrawAdd(vecDrawLex, dockingPort:position, evadeVec, blue,"evadeVec").
@@ -96,15 +190,15 @@ function moveOnVec {
 }
 
 function approach {
-  parameter targetPort is target:dockingports[0]. 
-  parameter dockingPort is ship:dockingports[0].
+  parameter targetPort is target. 
+  parameter dockingPort is getDockingPort().
   parameter offset is 0.
 
   print "approach         " at (60,0).
   dockingPort:controlFrom().
   lock steering to -1 * targetPort:portfacing:vector.
   until isCloseTo(offset,getDistanceVec(offset):mag){
-    local approachVec is calcVelVecFromDistance(getDistanceVec(offset)).
+    local approachVec is calcVelVecFromDistance(getDistanceVec(offset),2).
     vecDrawAdd(vecDrawLex, dockingPort:position, approachVec, yellow,"approachVec").
     moveOnVec(-1*approachVec).
   }
@@ -159,7 +253,7 @@ function goAround{
     local offsetVec is targetPort:portfacing:foreVector * noGoZone.
     vecDrawAdd(vecDrawLex, targetPort:position, offsetVec, cyan,"offsetVec").
     vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec+offsetVec, magenta,"diffVec").
-    set done to (distanceVec+offsetVec):mag < moveVelVec:mag.
+    set done to (distanceVec+offsetVec):mag < moveVelVec:mag or vang((distanceVec+offsetVec),distanceVec)<10.
   }
   killRelVelPrec().
 }
@@ -169,7 +263,6 @@ function calcPerVel {
   parameter speedLimit is 5.
   local alpha is arcSin(speedLimit/noGoZone).
   local periVel is speedLimit / cos(alpha).
-  print periVel at(60,17).
   return periVel.
 }
 
@@ -183,8 +276,10 @@ function resetShipControl {
 function calcVelVecFromDistance{
   parameter distanceVec.
   parameter speedLimit is 5.
-  parameter acceleration is 0.2.
+  //TODO Asume RCS thrust 1kN
+  parameter acceleration is 1/ship:mass.
 
 	local targetVel IS MIN(sqrt(2 * distanceVec:MAG / acceleration) * acceleration,speedLimit).
 	return distanceVec:NORMALIZED * targetVel.
 }
+

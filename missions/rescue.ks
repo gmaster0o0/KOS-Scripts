@@ -12,6 +12,9 @@ runPath("../lib/wait_lib.ks").
 runPath("../lib/warp_lib.ks").
 
 parameter missionStatus is 1.
+parameter targetDistance is 100.
+parameter turningTime is 10.
+
 local targetApo is target:apoapsis.
 
 //LAUNCH TO PARKING ORBIT.
@@ -27,7 +30,7 @@ if missionStatus = 5 {
 }
 
 if missionStatus = 6 {
-  approcheTarget(100).
+  approcheTarget(targetDistance,turningTime).
   set missionStatus to 7.
 }
 

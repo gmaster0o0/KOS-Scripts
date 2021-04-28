@@ -4,22 +4,22 @@ function raisePeriapsis {
 
   local dv is deltaVToPeriapsis().
   local bt is burnTimeForDv(dv).
+
+  lock steering to circPrograde().
+  wait until steeringManager:ANGLEERROR < 1.
   waitToApoapsis(bt/2).
 
   printO("CIRC","Periapsis emelese:[DV:"+round(dv,1)+"][BT:"+round(bt,1)+"][AP:"+targetPeri+"]").
-  lock throttle to 1.
-  lock steering to circPrograde().
+  local th is 0.
+  lock throttle to th.
   until status = "ORBITING" and (
     (orbit:eccentricity < 0.0005 and isCloseTo(targetPeri,periapsis,targetPeri*0.01)) or
     periapsis > targetPeri*errorTreshold or
     apoapsis > targetPeri * errorTreshold
   ) {
-    local perc is periapsis/targetPeri. 
+    set th to burnTimeForDv(deltaVToPeriapsis()).
     flightData().
     checkBoosters().
-    if(perc>0.9){
-      lock throttle to max(0.05,1-perc).
-    }
   }
   printO("CIRC","Körpálya elérve:"+ orbit:eccentricity).
   lock throttle to 0.

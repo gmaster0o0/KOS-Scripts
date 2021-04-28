@@ -14,6 +14,7 @@ function waitForTransferWindow {
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
   printO("TRANSFER","ETA" + round(ETAofTransfer,1)).
   addalarm("raw", time:seconds + ETAofTransfer - bt - 120, "Transfer window", "Ready for transfer").
+  add node(time:seconds + ETAofTransfer,0,0,dv).
   lock steering to prograde.
   until ETAofTransfer < bt/2 {
     wait 1.
@@ -147,6 +148,9 @@ function escapeTransfer {
 function doOrbitTransfer {
   parameter PE_GOAL is 40000.
 
+  local thPid is PIDLOOP(0.5,0.1,0.05,0,1).
+  set thPid:setpoint to target:apoapsis.
+
   lock steering to prograde.
   wait until steeringManager:ANGLEERROR < 1.
   local th is 1.
@@ -154,15 +158,15 @@ function doOrbitTransfer {
   printO("TRANSFER","Pályamódosítás megkezdése").
   local DONE is false.
   until apoapsis > target:apoapsis or DONE {
-    if(apoapsis /target:apoapsis > 0.9){
-      set th to max(0.05,1-(apoapsis/target:apoapsis)).
+    if obt:hasNextPatch {
+      set thPid:setpoint to PE_GOAL.
+      set th to thPid:update(time:seconds, -obt:nextPatch:periapsis).
+      set DONE to obt:nextPatch:periapsis < PE_GOAL.
     }else {
-      set th to 1.
+      set th to thPid:update(time:seconds,apoapsis).
     }
     checkBoosters().
-    if obt:hasNextPatch {
-      set DONE to obt:nextPatch:periapsis < PE_GOAL.
-    }
+
   }
   printO("TRANSFER","Pályamódosítás befejezve:"+ round(apoapsis)).
   unlock all.
@@ -173,13 +177,11 @@ function avoidCollision {
   parameter minPer is 40000.
   if periapsis < 40000 {
     lock steering to heading (90,0).
-    wait 10.
+    wait until steeringManager:ANGLEERROR < 1.
     lock throttle to 1.
     until periapsis > minPer {
       if periapsis / minPer > 0.9 {
         lock throttle to max(0.05, 1-periapsis / minPer ).
-        print "PE:" at (0,1).
-        print periapsis at (15,1).
       }
     }
     lock throttle to 0.

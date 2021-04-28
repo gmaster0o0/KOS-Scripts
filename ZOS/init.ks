@@ -76,7 +76,8 @@ function copyAllFilesToBoot {
   "landV",
   "transfer",
   "dock",
-  "station"
+  "station",
+  "incMatch"
   ),"missions").
   print "-----------------------------------:" + missionfiles.
   print zosFiles + missionfiles + libfiles + " bytes copied".

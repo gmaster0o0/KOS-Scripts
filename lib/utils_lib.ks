@@ -50,7 +50,7 @@ function avgGrav {
   return (gravity(startAlt) + gravity(startAlt - dist))/2.
 }
 
-	//Eccentricity anomaly from true anomaly
+//Eccentricity anomaly from true anomaly
 //https://en.wikipedia.org/wiki/Eccentric_anomaly
 function EAFromTA {
 	parameter ecc.
@@ -119,6 +119,32 @@ function TAofANNode {
 
 	local bodyToNodeVec is vcrs(obj1Norm,obj2Norm).
 	local bodyToObjectVec is obj1:position - obj1:body:position.
+	local angObjNode is vang(bodyToNodeVec,bodyToObjectVec).
 
- 	return utilReduceTo360(signAngle(bodyToNodeVec,bodyToObjectVec,getNormalOfObjectOrbit(obj1))).
+	//passed the node
+	if vdot(bodyToNodeVec, vCrs(obj1Norm,bodyToObjectVec):normalized) < 0 {
+		set angObjNode to 360 - angObjNode.
+	}
+
+	return mod(angObjNode + obj1:orbit:trueAnomaly,360).
+}
+
+function getBurnVector {
+  parameter obj1.
+  parameter obj2.
+  parameter timeToNode.
+
+  local velAtAN is velocityAt(ship, timeToNode + time:seconds):orbit.
+  local sNorm is getNormalOfObjectOrbit(obj1).
+  local tNorm is getNormalOfObjectOrbit(obj2).
+  //vecDrawAdd(vecDrawLex,ship:position,ship:velocity:orbit,RED,"svel").
+  //vecDrawAdd(vecDrawLex,ship:position,minmus:velocity:orbit,BLUE,"tvel").
+  //vecDrawAdd(vecDrawLex,ship:position,sNorm*10,yellow,"sNorm").
+  //vecDrawAdd(vecDrawLex,ship:position,tNorm*10,cyan,"tNorm").
+  local burn_unit is (sNorm + tNorm ):NORMALIZED.
+  local burn_mag is sNorm*velAtAN - tNorm*velAtAN.
+  local burnVector is burn_mag*burn_unit.
+  //vecDrawAdd(vecDrawLex,ship:position,burnVector,green,"burnVector").
+
+  return burnVector.
 }

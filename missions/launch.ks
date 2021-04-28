@@ -11,7 +11,7 @@ runPath("../lib/warp_lib.ks").
 
 clearScreen.
 parameter missionStatus is 0.
-parameter targetApo is 80000.
+parameter targetApo is 80.
 parameter unpack is true.
 print "=====================================" at (60,0).
 print "|APOAPSIS:    " at (60,1).
@@ -30,7 +30,7 @@ if(missionStatus = 0) {
   set missionStatus to 1.
 }
 if(missionStatus = 1) {
-  gravityTurn(targetApo).
+  gravityTurn(targetApo*1000).
   set missionStatus to 2.
 }
 if(missionStatus = 2) {
@@ -38,7 +38,7 @@ if(missionStatus = 2) {
   set missionStatus to 3.
 }
 if(missionStatus = 3) {
-  raisePeriapsis(targetApo).
+  raisePeriapsis(targetApo*1000).
   set missionStatus to 4.
 }
 LOG  (startingDV - ship:deltaV:current) to "0:/dv.txt". 

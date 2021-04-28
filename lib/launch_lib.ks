@@ -14,7 +14,7 @@ function gravityTurn {
   parameter targetApo is 80000.
   
   lock pitchAng  to getPitch(targetApo).
-  lock steering to heading(90,pitchAng,ship:facing:roll).
+  lock steering to heading(90,pitchAng).
   lock throttle to 1.
   local maxQ is 0.
   printO("LAUNCH", "Emelkedés "+targetApo + "m").
@@ -26,6 +26,8 @@ function gravityTurn {
     print round(TWR(),5) at (80,6).
     if ship:Q > maxQ {
       set maxQ to ship:Q.
+    }else {
+      lock throttle to 2.5 / min(2.5,TWR()).
     }
     print round(maxQ,5) at (80,5).
     checkBoosters().
