@@ -23,9 +23,9 @@ function waitForTransferWindow {
     local targetAng to getTargetAngle().
     set angleChangeRate to abs(tAngVel-sAngVel).
     set ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
-    print round(targetAng,1) at (60,1).
-    print round(ETAofTransfer,1) at (60,2).
-    print round(angleChangeRate,2) at (60,3).
+    print round(targetAng,1) at (80,1).
+    print round(ETAofTransfer,1) at (80,2).
+    print round(angleChangeRate,2) at (80,3).
     cancelWarpBeforeEta(ETAofTransfer, bt).
   }
 }

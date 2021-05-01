@@ -14,6 +14,7 @@ runPath("../lib/warp_lib.ks").
 parameter missionStatus is 1.
 parameter targetDistance is 100.
 parameter turningTime is 10.
+parameter fast is true.
 
 local targetApo is target:apoapsis.
 
@@ -30,7 +31,7 @@ if missionStatus = 5 {
 }
 
 if missionStatus = 6 {
-  approcheTarget(targetDistance,turningTime).
+  approcheTarget(targetDistance,turningTime,fast).
   set missionStatus to 7.
 }
 

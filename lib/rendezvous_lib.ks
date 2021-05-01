@@ -129,11 +129,13 @@ function getThrottle {
 function  approcheTarget {
   parameter distanceGoal is 50.
   parameter turningTime is 10.
+  parameter fast is true.
+  
   waitTheClosestDistance().
   until target:distance < distanceGoal {
     local lastVel to killRelVel().
     decreaseDistance(distanceGoal, lastVel,turningTime).
-    if target:distance > 2000 {
+    if target:distance > 2000 or not fast{
       waitTheClosestDistance().
     }
   }

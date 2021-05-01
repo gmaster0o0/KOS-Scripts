@@ -32,7 +32,7 @@ function copyFiles {
   parameter updateMode is false.
 
   local allFilesSize is 0.
-  local iospeed is 10*1024.
+  local iospeed is 20*1024.
 
   if calculateFileSpace(fileList,namespace) < core:volume:freespace {
     for f in fileList {

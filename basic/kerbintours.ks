@@ -14,7 +14,7 @@ parameter missionStatus is 0.
 parameter targetApo is 80000.
 
 if missionStatus < 5 {
-  run parkingOrbit(targetApo).
+  run launch(targetApo).
   set missionStatus to 5.
 }
 

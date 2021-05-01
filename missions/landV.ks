@@ -13,3 +13,5 @@ waitForStart().
 activateEngines().
 deOrbitBurn(0).
 suicideburn().
+
+clearVecDraws().

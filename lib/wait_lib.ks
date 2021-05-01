@@ -52,7 +52,7 @@ function waitUntilEndOfAtmosphere {
 }
 
 function waitToEncounter {
-  wait until status = "ESCAPING".
+  wait until obt:transition <> "ENCOUNTER".
   printO("TRANSFER",target:name + "Vonzáskörzete elérve").
 }
 

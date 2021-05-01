@@ -11,3 +11,9 @@ function nodeFromVector {
 
   return node(nodeTime,nodeRadial,nodeNormal,nodePrograde).
 }
+
+function removeNodes {
+  if not hasNode return.
+	for n in allNodes remove n.
+	wait 0.
+}

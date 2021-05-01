@@ -27,7 +27,9 @@ function gravityTurn {
     if ship:Q > maxQ {
       set maxQ to ship:Q.
     }else {
-      lock throttle to 2.5 / min(2.5,TWR()).
+      if body:atm:height>0 {
+        lock throttle to 2.5 / max(2.5,TWR()).
+      }
     }
     print round(maxQ,5) at (80,5).
     checkBoosters().
