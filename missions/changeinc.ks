@@ -54,10 +54,13 @@ if hasTarget or targetInc = "" {
   set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
 
   local dv is 2 * velAt:mag * sin (relInc/2).
-  set bt to burnTimeForDv(dv).  local nv is dv * cos(relInc/2).
-  local pv is dv * -sin(relInc/2).  print round(dv,1) at(80,6). 
-  add node(eta:apoapsis+ time:seconds, 0, nv,pv). 
-  set burnVec to v(0,nv,pv). 
+  local nv is dv * cos(relInc/2).
+  local pv is dv * -sin(relInc/2).  
+  set burnVec to v(0,nv,pv).
+  set bt to burnTimeForDv(burnVec:mag).
+  print round(burnVec:mag,1) at(80,6).
+  add node(ETAto + time:seconds + bt/2, 0, nv,pv). 
+   
   print "Waiting for AP" at (80,1).
 }
 
@@ -83,14 +86,16 @@ until ETAto < bt/2 {
 printO("INC", "Palya modositas megkezdese:[DV:" + round(burnVec:mag,1)+ "][BT:"+round(bt,1) +"]").
 local thPid is PIDLOOP(0.8,0.1,0.1,0,1).
 set thPid:setpoint to 0.
-local oldInc is relInc.
+local oldInc is abs(relInc).
 local done is false.
-until isCloseTo(0,relInc) or done {
-  set relInc to getRelInc().
+until isCloseTo(0,oldInc,0.05) or done {
+  set relInc to abs(getRelInc()).
   set th to thPid:update(time:seconds,-1*relInc).
   print round(relInc,2) at (80,7).
   print round(th*100,2) at (80,8).
   //avoid to increasing
+  print relInc. 
+  print oldInc.
   set done to relInc > oldInc.
   set oldInc to relInc.
   checkBoosters().
