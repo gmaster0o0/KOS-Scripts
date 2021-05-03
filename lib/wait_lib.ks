@@ -52,8 +52,9 @@ function waitUntilEndOfAtmosphere {
 }
 
 function waitToEncounter {
-  wait until obt:transition <> "ENCOUNTER".
-  printO("TRANSFER",target:name + "Vonzáskörzete elérve").
+  parameter targetBody.
+  wait until obt:transition <> "ENCOUNTER" and body:name <> targetBody.
+  printO("TRANSFER",body:name + "Vonzáskörzete elérve").
 }
 
 function waitUntilLeaveSOI {

@@ -11,7 +11,6 @@ runPath("../lib/wait_lib.ks").
 runPath("../lib/utils_lib.ks").
 
 parameter missionStatus is 0.
-parameter parkingOrbit is 40000.
 
 local targetBody is MUN.
 if missionStatus = 0 {
@@ -49,15 +48,15 @@ if(missionStatus = 6) {
   set missionStatus to 7.
 }
 if(missionStatus = 7) {
-  waitToEncounter().
+  waitToEncounter(targetBody).
   set missionStatus to 8.
 }
 if(missionStatus = 8) {
-  avoidCollision(parkingOrbit).
+  avoidCollision().
   set missionStatus to 9.
 }
 if(missionStatus = 9){
-  lowerApoapsis(parkingOrbit).
+  lowerApoapsis().
 }
 
 

@@ -4,12 +4,15 @@ runPath("../lib/wait_lib.ks").
 runPath("../lib/rocket_utils_lib.ks").
 runPath("../lib/ui_lib.ks").
 runPath("../lib/staging_lib.ks").
+runPath("../lib/node_lib.ks").
 
 parameter targetInc is "".
 
 clearVecDraws().
 clearScreen.
+removeNodes().
 local vecDrawLex is lexicon().
+
 local targetObj is minmus.
 
 print "                    CHANGE ORBIT INCLINATION                           " at (20,0).
@@ -42,25 +45,19 @@ if hasTarget or targetInc = "" {
   set bt to burnTimeForDv(burnVec:mag).
   
   print "Varunk a AN-ra"  at (80,1).
-  print ANTA at(80,2).
+  print round(ANTA) at(80,2).
   print round(burnVec:mag,1) at(80,6).
-  
+  nodeFromVector(burnVec,ETAto + time:seconds + bt/2).
 }else{
-  //runPath("../lib/node_lib.ks").
-  //removeNodes().
   set relInc to getRelInc().
   set ETAto to eta:apoapsis.
   set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
 
   local dv is 2 * velAt:mag * sin (relInc/2).
-  set bt to burnTimeForDv(dv).
-
-  local nv is dv * cos(relInc/2).
-  local pv is dv * -sin(relInc/2).
-  print round(dv,1) at(80,6). 
-
-  add node(eta:apoapsis+ time:seconds, 0, nv,pv).
-  set burnVec to v(0,nv,pv).
+  set bt to burnTimeForDv(dv).  local nv is dv * cos(relInc/2).
+  local pv is dv * -sin(relInc/2).  print round(dv,1) at(80,6). 
+  add node(eta:apoapsis+ time:seconds, 0, nv,pv). 
+  set burnVec to v(0,nv,pv). 
   print "Waiting for AP" at (80,1).
 }
 
@@ -70,7 +67,11 @@ print round(bt,1) at(80,5).
 print round(relInc,2) at (80,7).
 print round(th*100,2) at (80,8).
 
+lock steering to burnVec.
+wait until steeringManager:ANGLEERROR < 1.
+addalarm("raw", time:seconds + max(30,ETAto - bt), "AN node", "change inc").
 until ETAto < bt/2 {
+  wait 1.
   if hasTarget or targetInc = "" {
     set ETAto to ETAtoTA(ship:orbit,ANTA).
   }else{
@@ -80,17 +81,19 @@ until ETAto < bt/2 {
 }
 
 printO("INC", "Palya modositas megkezdese:[DV:" + round(burnVec:mag,1)+ "][BT:"+round(bt,1) +"]").
-lock steering to burnVec.
-wait until steeringManager:ANGLEERROR < 1.
-
-local thPid is PIDLOOP(0.5,0.1,0.05,0,1).
+local thPid is PIDLOOP(0.8,0.1,0.1,0,1).
 set thPid:setpoint to 0.
-until isCloseTo(0,relInc) {
-  checkBoosters().
+local oldInc is relInc.
+local done is false.
+until isCloseTo(0,relInc) or done {
   set relInc to getRelInc().
   set th to thPid:update(time:seconds,-1*relInc).
   print round(relInc,2) at (80,7).
   print round(th*100,2) at (80,8).
+  //avoid to increasing
+  set done to relInc > oldInc.
+  set oldInc to relInc.
+  checkBoosters().
 }
 printO("INC", "Palya modositas befejezve").
 set th to 0.

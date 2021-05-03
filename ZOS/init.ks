@@ -63,7 +63,9 @@ function copyAllFilesToBoot {
   "warp_lib",
   "docking_lib",
   "vecDraw_lib",
-  "landVac_lib"
+  "landVac_lib",
+  "refuel_lib",
+  "node_lib"
   ),"lib").
   if not silent {
     print "-----------------------------------:" + libfiles.
@@ -77,7 +79,7 @@ function copyAllFilesToBoot {
   "transfer",
   "dock",
   "station",
-  "incMatch"
+  "changeinc"
   ),"missions").
   print "-----------------------------------:" + missionfiles.
   print zosFiles + missionfiles + libfiles + " bytes copied".

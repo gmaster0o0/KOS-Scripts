@@ -13,9 +13,10 @@ function waitForTransferWindow {
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
   printO("TRANSFER","ETA" + round(ETAofTransfer,1)).
-  addalarm("raw", time:seconds + ETAofTransfer - bt - 120, "Transfer window", "Ready for transfer").
+  addalarm("raw", time:seconds + max(30,ETAofTransfer - bt), "Transfer window", "Ready for transfer").
   add node(time:seconds + ETAofTransfer,0,0,dv).
   lock steering to prograde.
+  wait until steeringManager:ANGLEERROR < 1.
   until ETAofTransfer < bt/2 {
     wait 1.
     set tAngVel to 360/target:obt:period.
@@ -108,10 +109,11 @@ function escapeTransfer {
 
   local transfer is calculateReturnTransfer(PE_GOAL).
   lock steering to prograde.
+  wait until steeringManager:ANGLEERROR < 1.
   local burnTime to burnTimeForDv(transfer["dv"]).
   local PHASE_ETA is transfer["eta"].
 
-  addalarm("raw", time:seconds + PHASE_ETA - burnTime - 120, "Return window", "Ready for transfer").
+  addalarm("raw", time:seconds + max(30,PHASE_ETA - burnTime), "Return window", "Ready for transfer").
 
   //local testnode to node(time:seconds + transfer["eta"], 0, 0, transfer["dv"]).
   //add testnode.
@@ -146,10 +148,7 @@ function escapeTransfer {
 }
 
 function doOrbitTransfer {
-  parameter PE_GOAL is 40000.
-
-  local thPid is PIDLOOP(0.5,0.1,0.05,0,1).
-  set thPid:setpoint to target:apoapsis.
+  parameter PE_GOAL is max(body:atm:height * 1.2, body:radius*0.2).
 
   lock steering to prograde.
   wait until steeringManager:ANGLEERROR < 1.
@@ -157,16 +156,28 @@ function doOrbitTransfer {
   lock throttle to th.
   printO("TRANSFER","Pályamódosítás megkezdése").
   local DONE is false.
-  until apoapsis > target:apoapsis or DONE {
-    if obt:hasNextPatch {
-      set thPid:setpoint to PE_GOAL.
-      set th to thPid:update(time:seconds, -obt:nextPatch:periapsis).
-      set DONE to obt:nextPatch:periapsis < PE_GOAL.
-    }else {
-      set th to thPid:update(time:seconds,apoapsis).
-    }
-    checkBoosters().
+  print "AP/TAP:" at (60,1).
+  print "dv:" at (60,2).
+  print "bt:" at (60,3).
+  local dv is hohmannDv().
+  local velStart is ship:velocity:orbit:mag.
+  //avoid body change before arrive
+  local targetBody is target.
+  until apoapsis > targetBody:apoapsis or DONE {
+    local dvleft to (velStart + dv) - ship:velocity:orbit:mag.
+    local bt is burnTimeForDv(dvleft).
 
+    if obt:hasNextPatch {
+      if obt:nextPatch = targetBody:obt {
+        set th to bt/30.
+        set DONE to obt:nextPatch:periapsis < PE_GOAL.
+      }
+    }else{
+      set th to bt/10.
+    }
+    print round(dvleft,1) at (80,2).
+    print round(bt,1) at (80,3).
+    checkBoosters().
   }
   printO("TRANSFER","Pályamódosítás befejezve:"+ round(apoapsis)).
   unlock all.
@@ -174,8 +185,8 @@ function doOrbitTransfer {
 
 function avoidCollision {
   printO("TRANSFER", "Elkerülő manőver.PE:" + periapsis).
-  parameter minPer is 40000.
-  if periapsis < 40000 {
+  parameter minPer is max(body:atm:height * 1.2, body:radius*0.2).
+  if periapsis < minPer {
     lock steering to heading (90,0).
     wait until steeringManager:ANGLEERROR < 1.
     lock throttle to 1.

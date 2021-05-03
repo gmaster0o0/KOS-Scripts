@@ -86,10 +86,10 @@ function checkBoosters {
       doBoosterStaging(p).
     }
     if stage:number > 0{
+      wait 1.
       doSafeStage().
     }
   }
-  wait 1.
 }
 
 function activateEngines {
