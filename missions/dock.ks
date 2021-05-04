@@ -31,7 +31,11 @@ checkRelVel().
 evadeTarget(nogodist).
 
 goAround(target, dockingPort,nogodist).
-approach(target, dockingPort).
+approach(target, dockingPort,10).
+killRelVelPrec().
+local steer is selectPortRotation(target).
+approach(target,dockingPort,0,steer).
+
 SET SHIP:CONTROL:NEUTRALIZE TO TRUE.
 WAIT 5.
 RCS OFF.

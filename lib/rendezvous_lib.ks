@@ -32,7 +32,7 @@ function waitTheClosestDistance {
   //diff > 0 novekszik
   //diff < 0 csokken
   local diff is 0.
-
+  lock steering to -target:position.
   until done {
     local prev is target:distance.
     wait 1.
@@ -91,7 +91,7 @@ function decreaseDistance {
   until target:distance < startDistance/2 or 
         target:distance < distanceGoal or
         shipCannotStop(engineAcc, turningTime) or
-        relVelVec:mag > maxSpeed
+        relVelVec:mag > maxSpeed*0.5
   {
     set relVelVec to target:velocity:orbit - ship:velocity:orbit.
     set th to getThrottle(turningTime, startDistance,relVelVec:mag).

@@ -79,7 +79,8 @@ function copyAllFilesToBoot {
   "transfer",
   "dock",
   "station",
-  "changeinc"
+  "changeinc",
+  "refuel"
   ),"missions").
   print "-----------------------------------:" + missionfiles.
   print zosFiles + missionfiles + libfiles + " bytes copied".

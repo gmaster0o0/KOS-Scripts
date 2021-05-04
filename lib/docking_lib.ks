@@ -96,7 +96,6 @@ function chooseTargetPort {
   }
   rcs off.
   abort off.
-
   return selectedPort.
 }
 
@@ -193,10 +192,11 @@ function approach {
   parameter targetPort is target. 
   parameter dockingPort is getDockingPort().
   parameter offset is 0.
+  parameter steer is -1 * targetPort:portfacing:vector.
 
   print "approach         " at (60,0).
   dockingPort:controlFrom().
-  lock steering to -1 * targetPort:portfacing:vector.
+  lock steering to steer.
   until isCloseTo(offset,getDistanceVec(offset):mag){
     local approachVec is calcVelVecFromDistance(getDistanceVec(offset),2).
     vecDrawAdd(vecDrawLex, dockingPort:position, approachVec, yellow,"approachVec").
@@ -208,7 +208,7 @@ function approach {
 function killRelVelPrec {
   lock steering to target:position.
   print "Eliminate rel vel" at (60,0).
-  UNTIL getRelVelVec():MAG < 0.05 {
+  UNTIL getRelVelVec():MAG < 0.01 {
     moveOnVec(-1*getRelVelVec()).
   }
   resetShipControl().
@@ -241,9 +241,9 @@ function goAround{
     local distanceVec is getDistanceVec().
     calcPerVel().
     local normVec is -1*vCrs(distanceVec:normalized,targetPort:facing:forevector):normalized.
-    vecDrawAdd(vecDrawLex, dockingPort:position, normVec, red,"normVec").
+    //vecDrawAdd(vecDrawLex, dockingPort:position, normVec, red,"normVec").
     local periVec is vCrs(distanceVec,normVec):normalized * calcPerVel(noGoZone).
-    vecDrawAdd(vecDrawLex, dockingPort:position, periVec, yellow,"periVec").
+    //vecDrawAdd(vecDrawLex, dockingPort:position, periVec, yellow,"periVec").
     vecDrawAdd(vecDrawLex, targetPort:position, (periVec - distanceVec):normalized * noGoZone - dockingPort:position, yellow,"periN").
     local moveVec is (periVec - distanceVec):normalized * noGoZone - dockingPort:position + distanceVec.
     vecDrawAdd(vecDrawLex, dockingPort:position, moveVec, green,"moveVec").
@@ -253,7 +253,9 @@ function goAround{
     local offsetVec is targetPort:portfacing:foreVector * noGoZone.
     vecDrawAdd(vecDrawLex, targetPort:position, offsetVec, cyan,"offsetVec").
     vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec+offsetVec, magenta,"diffVec").
-    set done to (distanceVec+offsetVec):mag < moveVelVec:mag or vang((distanceVec+offsetVec),distanceVec)<10.
+    print (distanceVec+offsetVec):mag at (30,30).
+    print (moveVec):mag at (30,31).
+    set done to (distanceVec+offsetVec):mag < moveVec:mag.
   }
   killRelVelPrec().
 }
@@ -283,3 +285,30 @@ function calcVelVecFromDistance{
 	return distanceVec:NORMALIZED * targetVel.
 }
 
+function selectPortRotation{
+  parameter targetPort is target:dockingports[0]. 
+
+  clearscreen.
+  print "Choose port rotation".
+  print "SAS=Rotate 90".
+  print "abort=Confrim".
+  rcs on.
+  local portRotation is 0.
+  local targetFore is targetPort:portFacing:foreVector.
+  local targetTop is targetPort:portFacing:topVector.
+  local steer is angleAxis(portRotation, targetFore) * lookDirUp(-targetFore,targetTop).
+  until abort {
+    lock steering to steer.
+    wait until steeringManager:angleerror < 1.
+    if sas {
+      set portRotation to utilReduceTo360(portRotation + 90).
+      print "selected port rotation:" + portRotation.
+      sas off.
+      set steer to angleAxis(portRotation, targetFore) * lookDirUp(-targetFore,targetTop).
+    }
+  }
+  sas off.
+  abort off.
+
+  return steer.
+}
