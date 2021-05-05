@@ -136,10 +136,18 @@ function getDistanceVec {
 
   local dockingPort is getDockingPort().
 
-  local targetPort is target.
+  local distanceVec is v(0,0,0).
 
-  local offsetVec is targetPort:portfacing:foreVector * offset.
-  local distanceVec is targetPort:nodePosition - dockingPort:nodePosition + offsetVec.
+  if target:istype("dockingport"){
+    local targetPort is target.
+    local offsetVec is targetPort:portfacing:foreVector * offset.
+    set distanceVec to targetPort:nodePosition - dockingPort:nodePosition + offsetVec.
+  }else{
+    local offsetVec is (target:position - dockingPort:nodePosition):normalized * offset.
+    set distanceVec to target:position - dockingPort:nodePosition + offsetVec.
+  }
+
+  
   if drawVec {
     vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec, blue,"distanceVec").
   }
@@ -255,7 +263,7 @@ function goAround{
     vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec+offsetVec, magenta,"diffVec").
     print (distanceVec+offsetVec):mag at (30,30).
     print (moveVec):mag at (30,31).
-    set done to (distanceVec+offsetVec):mag < moveVec:mag.
+    set done to (distanceVec+offsetVec):mag < 2 * moveVec:mag.
   }
   killRelVelPrec().
 }

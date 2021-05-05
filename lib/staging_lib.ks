@@ -56,15 +56,41 @@ function checkEngines {
 
 function getCurrentStageBoosters {
   local boosters to list().
+  local engineList is list().
   list engines in engineList.
   local currentStageNumber to getMaxStageNumber(engineList).
   
   for e in  engineList {
-    if e:decoupledin = currentStageNumber {
+    if e:decoupledin = currentStageNumber and e:ignition{
       boosters:add(e).
     }
   }
   return boosters.
+}
+
+function getStagedPartsMass {
+  parameter stagenumber is stage:number.
+
+  local totalMass to 0.
+  for p in getStagedParts(stagenumber) {
+    set totalMass to totalMass + p:drymass.
+  }
+
+  return totalMass.
+}
+
+function getStagedParts {
+  parameter stagenumber is stage:number.
+
+  list parts in partsList.
+  local stagedParts to list().
+
+  for p in partsList {
+    if p:decoupledin = stagenumber - 1 or (p:decoupledin = -1 and stagenumber = p:stage){
+      stagedParts:add(p).
+    }
+  }
+  return stagedParts.
 }
 
 function getMaxStageNumber {
@@ -93,6 +119,7 @@ function checkBoosters {
 }
 
 function activateEngines {
+  local engineList is list().
   list engines in engineList.
 
   for e in engineList {
@@ -108,7 +135,6 @@ function activateEngines {
     }
   }
 }
-
 
 function doSafeStage {
   wait until stage:ready.

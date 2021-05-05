@@ -14,7 +14,7 @@ parameter missionStatus is 0.
 
 local targetBody is MUN.
 if missionStatus = 0 {
-  print "PRESS ABORT TO START LANDING!" at (30,10).
+  print "PRESS ABORT FOR LAUNCH!" at (30,10).
   wait until abort.
   clearScreen.
   set abort to false.

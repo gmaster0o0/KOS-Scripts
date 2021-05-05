@@ -20,7 +20,8 @@ print "|ALTITUDE:    " at (60,3).
 print "|SHIP:Q:      " at (60,4).
 print "|Max Q:       " at (60,5).
 print "|TWR:         " at (60,6).
-print "=====================================" at (60,7).
+print "|Pitch:       " at (60,7).
+print "=====================================" at (60,8).
 print "========Event log================================================================".
 
 local startingDV is ship:deltaV:current.

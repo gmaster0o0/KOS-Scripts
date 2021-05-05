@@ -8,10 +8,14 @@ runPath("../lib/warp_lib.ks").
 runPath("../lib/landVac_lib.ks").
 runPath("../lib/vecDraw_lib.ks").
 
+parameter killHorSpeed is false.
 //STARTING HERE
 waitForStart().
 activateEngines().
 deOrbitBurn(0).
+if killHorSpeed {
+  killhorizontalspeed().  
+}
 suicideburn().
 
 clearVecDraws().

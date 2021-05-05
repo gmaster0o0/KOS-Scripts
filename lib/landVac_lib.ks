@@ -95,6 +95,7 @@ function suicideBurn {
     set th to breakingPID:UPDATE(time:seconds,verticalSpeed).
     wait 0.
   }
+  set th to 0.
   print "LANDED      " at (60,0).
   wait 2.
   unlock all.

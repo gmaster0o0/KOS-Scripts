@@ -39,7 +39,7 @@ function gravityTurn {
 function getPitch {
   parameter targetApo.
   if body:atm:height > 0 {
-     max(8,90*(1-apoapsis/body:atm:height)).
+     return max(8,90*(1-apoapsis/body:atm:height)).
   }
   return max(3,90*(1-apoapsis/targetApo)).
 }
