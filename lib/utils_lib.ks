@@ -1,3 +1,5 @@
+local vecDrawLex is lexicon().
+
 function isCloseTo {
 	parameter targetNumber.
 	parameter currentNumber.
@@ -75,8 +77,10 @@ function getNormalOfObjectOrbit {
 
 	local positionVector is object:body:position - object:position.
 	local velocityVector is object:velocity:orbit.
+	if object:status = "LANDED" {
+		set velocityVector to object:velocity:surface.
+	}
 	local normalVec is vCrs(velocityVector, positionVector):normalized.
-
 	return normalVec.
 }
 //time from periapsis to true anomaly
@@ -137,14 +141,40 @@ function getBurnVector {
   local velAtAN is velocityAt(ship, timeToNode + time:seconds):orbit.
   local sNorm is getNormalOfObjectOrbit(obj1).
   local tNorm is getNormalOfObjectOrbit(obj2).
+
   //vecDrawAdd(vecDrawLex,ship:position,ship:velocity:orbit,RED,"svel").
   //vecDrawAdd(vecDrawLex,ship:position,minmus:velocity:orbit,BLUE,"tvel").
-  //vecDrawAdd(vecDrawLex,ship:position,sNorm*10,yellow,"sNorm").
-  //vecDrawAdd(vecDrawLex,ship:position,tNorm*10,cyan,"tNorm").
+  //vecDrawAdd(vecDrawLex,ship:position,sNorm*10000,yellow,"sNorm").
+  
   local burn_unit is (sNorm + tNorm ):NORMALIZED.
   local burn_mag is sNorm*velAtAN - tNorm*velAtAN.
   local burnVector is burn_mag*burn_unit.
   //vecDrawAdd(vecDrawLex,ship:position,burnVector,green,"burnVector").
 
   return burnVector.
+}
+
+function getNormalOfObjectOrbitAt {
+	parameter object.
+  parameter utime is time:seconds.
+	local positionVector is object:body:position - positionAt(object,utime).
+	local velocityVector is velocityAt(object,utime):orbit.
+	vecDrawAdd(vecDrawLex,positionAt(object,utime),velocityVector*10000	,green,"V"+object:name).
+	if object:status = "LANDED" {
+		set velocityVector to velocityAt(object,utime):surface.
+	}
+	local normalVec is vCrs(velocityVector, positionVector):normalized.
+	return normalVec.
+}
+
+//relative inclination between 2 object
+function relativeIncAt {
+	parameter obj1.
+	parameter obj2.
+  parameter utime is time:seconds.
+
+	local obj1Norm is getNormalOfObjectOrbitAt(obj1,utime).
+	local obj2Norm is getNormalOfObjectOrbitAt(obj2,utime).
+
+	return vang(obj1Norm,obj2Norm).
 }

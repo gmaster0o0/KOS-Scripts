@@ -13,6 +13,18 @@ clearScreen.
 parameter missionStatus is 0.
 parameter targetApo is 80.
 parameter unpack is true.
+
+if(missionStatus = 0) {
+  clearScreen.
+  print "PRESS ABORT FOR LAUNCH!" at (30,10).
+  wait until abort.
+  clearScreen.
+  set abort to false.
+
+  launch(3).
+  set missionStatus to 1.
+}
+
 print "=====================================" at (60,0).
 print "|APOAPSIS:    " at (60,1).
 print "|PERIAPSIS:   " at (60,2). 
@@ -26,16 +38,12 @@ print "========Event log========================================================
 
 local startingDV is ship:deltaV:current.
 
-if(missionStatus = 0) {
-  launch(3).
-  set missionStatus to 1.
-}
 if(missionStatus = 1) {
   gravityTurn(targetApo*1000).
   set missionStatus to 2.
 }
 if(missionStatus = 2) {
-  waitUntilEndOfAtmosphere(unpack).
+  waitUntilEndOfAtmosphere(unpack,targetApo*1000).
   set missionStatus to 3.
 }
 if(missionStatus = 3) {

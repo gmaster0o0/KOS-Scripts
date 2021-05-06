@@ -33,10 +33,19 @@ function waitToEnterToATM {
 
 function waitUntilEndOfAtmosphere {
   parameter autoDeploy is true.
+  parameter targetApo is 0.
 
   printO("LAUNCH", "Várakozás amíg a hajó kiér a légkörből").
-  lock throttle to 0.
+  local adjustThrottle is 0.
+  lock throttle to adjustThrottle.
   until altitude > body:atm:height {
+    if targetApo > 0 and apoapsis < targetApo {
+      set adjustThrottle to 0.2*(1 - apoapsis/targetApo).
+      checkBoosters().
+    }else {
+      set adjustThrottle to 0.
+    }
+
     flightData().
   }
   printO("LAUNCH", "Kilépés a légkörből").

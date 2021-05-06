@@ -1,55 +1,3 @@
-function createTransferMap {
-  parameter resTag. 
-  
-  local resourceList is availableResources(resTag).
-  local resourceMap is lex().
-  for p in ship:parts {
-    for r in p:resources {
-      if resourceList:contains(r:name) {
-        if p:tag = resTag {     
-          set resourceMap to addResouce(resourceMap,p,r,"OUT").
-        }else {
-          set resourceMap to addResouce(resourceMap,p,r,"IN").
-        }
-      }
-    }
-  }
-  return resourceMap.
-}
-
-function addResouce{
-  parameter resLex.
-  parameter p.
-  parameter r.
-  parameter _direction.
-
-  if resLex:hasKey(r:name){
-    if resLex[r:name]:hasKey(_direction){
-      resLex[r:name][_direction]:add(p).
-    }else{
-      resLex[r:name]:add(_direction,list(p)).
-    }
-  }else{
-    resLex:add(r:name,lex(_direction,list(p))).
-  }
-  return resLex.
-}
-
-function availableResources {
-  parameter resTag. 
-  local resourceList is list().
-
-  for p in ship:partstagged(resTag) {
-    for res in p:resources{
-      if not resourceList:contains(res:name){
-        resourceList:add(res:name).
-      }
-    }
-  }
-
-  return resourceList.
-}
-
 function createResouceTransfers {
   parameter resTag.
   parameter amount is -1.
@@ -79,4 +27,56 @@ function executeResouceTransfer {
     print resTransfer:resource at (25,5).
     print resTransfer:transferred + "/" + resTransfer:goal at (25,6).
   }
+}
+
+local function createTransferMap {
+  parameter resTag. 
+  
+  local resourceList is availableResources(resTag).
+  local resourceMap is lex().
+  for p in ship:parts {
+    for r in p:resources {
+      if resourceList:contains(r:name) {
+        if p:tag = resTag {     
+          set resourceMap to addResouce(resourceMap,p,r,"OUT").
+        }else {
+          set resourceMap to addResouce(resourceMap,p,r,"IN").
+        }
+      }
+    }
+  }
+  return resourceMap.
+}
+
+local function addResouce{
+  parameter resLex.
+  parameter p.
+  parameter r.
+  parameter _direction.
+
+  if resLex:hasKey(r:name){
+    if resLex[r:name]:hasKey(_direction){
+      resLex[r:name][_direction]:add(p).
+    }else{
+      resLex[r:name]:add(_direction,list(p)).
+    }
+  }else{
+    resLex:add(r:name,lex(_direction,list(p))).
+  }
+  return resLex.
+}
+
+local function availableResources {
+  parameter resTag. 
+  local resourceList is list().
+
+  for p in ship:partstagged(resTag) {
+    for res in p:resources{
+      if not resourceList:contains(res:name){
+        resourceList:add(res:name).
+      }
+    }
+  }
+
+  return resourceList.
 }

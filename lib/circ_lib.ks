@@ -7,9 +7,9 @@ function raisePeriapsis {
 
   lock steering to circPrograde().
   wait until steeringManager:ANGLEERROR < 1.
+  printO("CIRC","Periapsis emelese:[DV:"+round(dv,1)+"][BT:"+round(bt,1)+"][AP:"+round(targetPeri)+"]").
   waitToApoapsis(bt/2).
-
-  printO("CIRC","Periapsis emelese:[DV:"+round(dv,1)+"][BT:"+round(bt,1)+"][AP:"+targetPeri+"]").
+  
   local th is 0.
   lock throttle to th.
   until status = "ORBITING" and (
@@ -45,11 +45,6 @@ function lowerApoapsis {
     (apoapsis < targetApo*errorTreshold and apoapsis > 0) or 
     orbit:eccentricity < 0.0005
   ) {
-    print apoapsis at (10,10).
-    print targetApo*errorTreshold  at (10,11).
-    print periapsis < startPeri*errorTreshold  at (10,12).
-    print apoapsis < targetApo*errorTreshold and apoapsis > 0  at (10,13).
-    print orbit:eccentricity < 0.0005  at (10,14).
     set th to burnTimeForDv(deltaVToPeriapsis()).
     checkBoosters().
     wait 0.1.
@@ -58,7 +53,7 @@ function lowerApoapsis {
   lock throttle to 0.
 }
 
-function circPrograde {
+local function circPrograde {
   parameter threshold is 30.
 
   if(eta:apoapsis < eta:periapsis){
@@ -67,7 +62,7 @@ function circPrograde {
   return prograde:vector + r(0,min(orbit:period - eta:apoapsis,threshold),0).
 }
 
-function circRetrograde {
+local function circRetrograde {
   parameter threshold is 30.
 
   if orbit:eccentricity > 1 {

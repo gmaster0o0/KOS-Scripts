@@ -115,8 +115,8 @@ function escapeTransfer {
 
   addalarm("raw", time:seconds + max(30,PHASE_ETA - burnTime), "Return window", "Ready for transfer").
 
-  //local testnode to node(time:seconds + transfer["eta"], 0, 0, transfer["dv"]).
-  //add testnode.
+  local testnode to node(time:seconds + transfer["eta"], 0, 0, transfer["dv"]).
+  add testnode.
   until (PHASE_ETA < burnTime/2) {
     local ORBIT_ANGLE is calcSignAngle().
     print "OBT_ANGLE:  " + ORBIT_ANGLE + "     " at (5,33).

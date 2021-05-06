@@ -15,42 +15,6 @@ function waitForStart {
   wait 5.
 }
 
-function createDisplay {
-  if verbose {
-    print "STATUS" at (40,0).
-    print "verticalspeed" at (40,1).
-    print "altRadar" at (40,2).
-    print "maxAccUp" at (40,3).
-    print "gravity" at (40,4).
-    print "ffSpeed" at (40,5).
-    print "impactTime" at (40,6).
-    print "burningTime" at (40,7).
-    print "breakingDistance" at (40,8).
-    print "throttle" at (40,9).
-    print "P_INP" at (40,10).
-    print "SurfaceSpeed" at (40,12).
-    print "Slope" at (40,13).
-  }
-}
-
-//calc stopping distance. Basic kinetic EQs
-function calculateStoppingDistance {
-  //t=v/a
-  // d = 1/2 *a* t^2
-  // d = (g/a)*h.
-  local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
-  print compensation at (60,17).
-  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
-  local stopDistanceX is groundVelVec:mag^2 / (2 * (ship:availablethrust/ship:mass)).
-  local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
-  print stopDistanceX at (60,14).
-  print stopDistanceY at (60,15).
-  local stopDistance is sqrt(stopDistanceX^2+stopDistanceY^2).
-    
-  fdata(stopDistance).
-
-  return stopDistance.
-}
 //performing suicid burn in 2 step.
 //1st is hard slow down until a hover alt
 //2nd state is just hover and slowly touch down
@@ -105,8 +69,61 @@ function suicideBurn {
   rcs off.
 }
 
+function killhorizontalspeed {
+  print "KILL HORIZONTAL SPEED" at (60,0).
+  local th is 0.
+  lock throttle to th.
+  lock steering to verticalSpeed * up:vector - ship:velocity:surface.
+  wait until steeringManager:ANGLEERROR < 1.
+
+  local done is false.
+  until done {
+    local groundVelVec to vxcl(up:vector, ship:velocity:surface).
+    set th to groundVelVec:mag / 10.
+    fdata().
+    set done to groundVelVec:mag < 3.
+  }
+}
+
+local function createDisplay {
+  if verbose {
+    print "STATUS" at (40,0).
+    print "verticalspeed" at (40,1).
+    print "altRadar" at (40,2).
+    print "maxAccUp" at (40,3).
+    print "gravity" at (40,4).
+    print "ffSpeed" at (40,5).
+    print "impactTime" at (40,6).
+    print "burningTime" at (40,7).
+    print "breakingDistance" at (40,8).
+    print "throttle" at (40,9).
+    print "P_INP" at (40,10).
+    print "SurfaceSpeed" at (40,12).
+    print "Slope" at (40,13).
+  }
+}
+
+//calc stopping distance. Basic kinetic EQs
+local function calculateStoppingDistance {
+  //t=v/a
+  // d = 1/2 *a* t^2
+  // d = (g/a)*h.
+  local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
+  print compensation at (60,17).
+  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
+  local stopDistanceX is groundVelVec:mag^2 / (2 * (ship:availablethrust/ship:mass)).
+  local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
+  print stopDistanceX at (60,14).
+  print stopDistanceY at (60,15).
+  local stopDistance is sqrt(stopDistanceX^2+stopDistanceY^2).
+    
+  fdata(stopDistance).
+
+  return stopDistance.
+}
+
 //display fligth data
-function fdata { 
+local function fdata { 
   parameter stopDistance is "",
   bt is "",
   ffs is "".
@@ -132,23 +149,7 @@ function fdata {
   //vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"velVec").
 }
 
-function killhorizontalspeed {
-  print "KILL HORIZONTAL SPEED" at (60,0).
-  local th is 0.
-  lock throttle to th.
-  lock steering to verticalSpeed * up:vector - ship:velocity:surface.
-  wait until steeringManager:ANGLEERROR < 1.
-
-  local done is false.
-  until done {
-    local groundVelVec to vxcl(up:vector, ship:velocity:surface).
-    set th to groundVelVec:mag / 10.
-    fdata().
-    set done to groundVelVec:mag < 3.
-  }
-}
-
-function groundSlope {
+local function groundSlope {
   local center is ship:position.
   if ADDONS:TR:HASIMPACT {
     set center to ADDONS:TR:IMPACTPOS:position.
@@ -170,7 +171,7 @@ function groundSlope {
   return vang(slopeNormVec, center - body:position).
 }
 
-function createTriangle {
+local function createTriangle {
   parameter height is 10.
   parameter center is ship:position.
 

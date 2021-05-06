@@ -13,13 +13,6 @@ runPath("../lib/utils_lib.ks").
 parameter missionStatus is 0.
 
 local targetBody is MUN.
-if missionStatus = 0 {
-  print "PRESS ABORT FOR LAUNCH!" at (30,10).
-  wait until abort.
-  clearScreen.
-  set abort to false.
-  set missionStatus to 1.
-}
 
 if hasTarget {
   set targetBody  to target.
@@ -27,35 +20,51 @@ if hasTarget {
 
 //LAUNCH TO PARKING ORBIT.
 if missionStatus < 5 {
-  run launch.
+  run launch(missionStatus).
+
   set missionStatus to 5.
 }
 clearScreen.
 
-print "========KERBINTOURS========" at(40,0).
-print "targetAng:" at(40,1).
-print "ETAofTransfer:" at(40,2).
-print "angleChangeRate:" at(40,3).
-print "========Event log========" at(40,4).
+print "========KERBINTOURS========" at(60,0).
+print "targetAng:" at(60,1).
+print "ETAofTransfer:" at(60,2).
+print "angleChangeRate:" at(60,3).
+print "========Event log========" at(60,4).
 
 if(missionStatus = 5) {
   set target to targetBody.
-  waitForTransferWindow().
+  local relInc is relativeInc(ship,targetBody).
+  until abs(relInc) < 1 {
+    run changeinc.
+    set relInc to relativeInc(ship,targetBody).
+  }
+  rcs off.
+  until obt:eccentricity < 0.0005 {
+    run launch(3).
+  }
+  rcs on.
   set missionStatus to 6.
 }
+
 if(missionStatus = 6) {
-  doOrbitTransfer().
+  waitForTransferWindow().
   set missionStatus to 7.
 }
+
 if(missionStatus = 7) {
-  waitToEncounter(targetBody).
+  doOrbitTransfer().
   set missionStatus to 8.
 }
 if(missionStatus = 8) {
-  avoidCollision().
+  waitToEncounter(targetBody).
   set missionStatus to 9.
 }
-if(missionStatus = 9){
+if(missionStatus = 9) {
+  avoidCollision().
+  set missionStatus to 10.
+}
+if(missionStatus = 10){
   lowerApoapsis().
 }
 

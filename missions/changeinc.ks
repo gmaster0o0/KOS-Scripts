@@ -11,7 +11,6 @@ parameter targetInc is "".
 clearVecDraws().
 clearScreen.
 removeNodes().
-local vecDrawLex is lexicon().
 
 local targetObj is minmus.
 
@@ -29,6 +28,7 @@ local relInc is 0.
 local ETAto is 0.
 local velAt is v(0,0,0).
 local burnVec is v(0,0,0).
+local dv is 0.
 local bt is 0.
 local th is 0.
 local ANTA is 0.
@@ -40,26 +40,28 @@ if hasTarget or targetInc = "" {
   set relInc to getRelInc().
   set ANTA to TAofANNode(ship,targetObj).
   set ETAto to ETAtoTA(ship:orbit,ANTA).
+
   set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
   set burnVec to getBurnVector(ship,targetObj,ETAto).
-  set bt to burnTimeForDv(burnVec:mag).
+  set dv to burnVec:mag.
+  set bt to burnTimeForDv(dv).
   
   print "Varunk a AN-ra"  at (80,1).
   print round(ANTA) at(80,2).
-  print round(burnVec:mag,1) at(80,6).
-  nodeFromVector(burnVec,ETAto + time:seconds + bt/2).
+
+  add nodeFromVector(burnVec,ETAto + time:seconds + bt/2).
 }else{
   set relInc to getRelInc().
   set ETAto to eta:apoapsis.
   set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
 
-  local dv is 2 * velAt:mag * sin (relInc/2).
+  set dv to 2 * velAt:mag * sin (relInc/2).
   local nv is dv * cos(relInc/2).
   local pv is dv * -sin(relInc/2).  
   set burnVec to v(0,nv,pv).
   set bt to burnTimeForDv(burnVec:mag).
-  print round(burnVec:mag,1) at(80,6).
-  add node(ETAto + time:seconds + bt/2, 0, nv,pv). 
+
+  add node(ETAto + time:seconds + bt/2, 0, nv,pv).
    
   print "Waiting for AP" at (80,1).
 }
@@ -67,8 +69,10 @@ if hasTarget or targetInc = "" {
 print round(ETAto,1) at (80,3). 
 print round(velAt:mag,1) at (80,4).
 print round(bt,1) at(80,5).
+print round(dv,1) at(80,6).
 print round(relInc,2) at (80,7).
 print round(th*100,2) at (80,8).
+
 
 lock steering to burnVec.
 wait until steeringManager:ANGLEERROR < 1.
@@ -80,7 +84,9 @@ until ETAto < bt/2 {
   }else{
     set ETAto to eta:apoapsis.
   }
-  print round(ETAto,1) at (80,3). 
+  set relInc to abs(getRelInc()).
+  print round(relInc,2) at (80,7).
+  print round(ETAto,1) at (80,3).   
 }
 
 printO("INC", "Palya modositas megkezdese:[DV:" + round(burnVec:mag,1)+ "][BT:"+round(bt,1) +"]").
@@ -94,16 +100,16 @@ until isCloseTo(0,oldInc,0.05) or done {
   print round(relInc,2) at (80,7).
   print round(th*100,2) at (80,8).
   //avoid to increasing
-  print relInc. 
-  print oldInc.
-  set done to relInc > oldInc.
+  print "rel"+relInc at (50,10). 
+  print "old"+oldInc at (50,11).
+  set done to relInc - oldInc > 0.01.
   set oldInc to relInc.
   checkBoosters().
 }
 printO("INC", "Palya modositas befejezve").
 set th to 0.
 
-function getRelInc {
+local function getRelInc {
   if hasTarget or targetInc = "" {
     return relativeInc(ship,targetObj).
   }else{

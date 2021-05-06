@@ -26,25 +26,20 @@ function changePeriod {
   waitToPeriapsis().
 }
 
-function waitTheClosestDistance {
-  local done is false.
-
-  //diff > 0 novekszik
-  //diff < 0 csokken
-  local diff is 0.
-  lock steering to -target:position.
-  until done {
-    local prev is target:distance.
-    wait 1.
-
-    if diff < 0 and prev < target:distance {
-      set done to true.
+function  approcheTarget {
+  parameter distanceGoal is 50.
+  parameter turningTime is 10.
+  parameter fast is true.
+  
+  waitTheClosestDistance().
+  until target:distance < distanceGoal {
+    local lastVel to killRelVel().
+    decreaseDistance(distanceGoal, lastVel,turningTime).
+    if target:distance > 2000 or not fast{
+      waitTheClosestDistance().
     }
-    set diff to prev - target:distance.
-
   }
-  printO("REND", "Legkisebb tavolsag elerve:" + target:distance).
-  CLEARVECDRAWS().
+  printO("REND", "Cel tavolsag elerve. Hiba" + abs(distanceGoal - target:distance)).
 }
 
 function killRelVel {
@@ -72,7 +67,35 @@ function killRelVel {
   return maxSpeed.
 }
 
-function decreaseDistance {
+function finishRendezvous {
+  lock steering to target:direction.
+  wait 3.
+  unlock all.
+  sas on.
+}
+
+local function waitTheClosestDistance {
+  local done is false.
+
+  //diff > 0 novekszik
+  //diff < 0 csokken
+  local diff is 0.
+  lock steering to -target:position.
+  until done {
+    local prev is target:distance.
+    wait 1.
+
+    if diff < 0 and prev < target:distance {
+      set done to true.
+    }
+    set diff to prev - target:distance.
+
+  }
+  printO("REND", "Legkisebb tavolsag elerve:" + target:distance).
+  CLEARVECDRAWS().
+}
+
+local function decreaseDistance {
   parameter distanceGoal is 50.
   parameter maxSpeed is 300.
   parameter turningTime is 10.
@@ -102,7 +125,7 @@ function decreaseDistance {
   wait turningTime.
 }
 
-function shipCannotStop {
+local function shipCannotStop {
   parameter engineAcc.
   parameter turningTime.
 
@@ -115,7 +138,7 @@ function shipCannotStop {
   return stoppingDistance > target:distance.
 }
 
-function getThrottle {
+local function getThrottle {
   parameter maxBurningTime is 4.
   parameter d0 is 50.
   parameter v0 is 0.
@@ -124,27 +147,4 @@ function getThrottle {
   local enginesAcc is ship:availablethrust/ ship:mass.
 
   return maxAcc / enginesAcc.
-}
-
-function  approcheTarget {
-  parameter distanceGoal is 50.
-  parameter turningTime is 10.
-  parameter fast is true.
-  
-  waitTheClosestDistance().
-  until target:distance < distanceGoal {
-    local lastVel to killRelVel().
-    decreaseDistance(distanceGoal, lastVel,turningTime).
-    if target:distance > 2000 or not fast{
-      waitTheClosestDistance().
-    }
-  }
-  printO("REND", "Cel tavolsag elerve. Hiba" + abs(distanceGoal - target:distance)).
-}
-
-function finishRendezvous {
-  lock steering to target:direction.
-  wait 3.
-  unlock all.
-  sas on.
 }

@@ -4,14 +4,14 @@ runPath("../lib/staging_lib.ks").
 
 parameter command.
 
-function releaseSafetyStruts {
+local function releaseSafetyStruts {
   local safeties is ship:partstagged("safety").
   for s in safeties {
     decoupleDock(s:parent).  
   }
 }
 
-function sendCommand {
+local function sendCommand {
   parameter cmd.
   local proc to processor("solar").
   if not proc:connection:sendmessage(cmd:TOUPPER) {
@@ -19,7 +19,7 @@ function sendCommand {
   }
 }
 
-function decoupleDock {
+local function decoupleDock {
   parameter dockingPort.
   for f in dockingPort:modulesnamed("ModuleDockingNode") {
     if f:hasaction("decouple node"){

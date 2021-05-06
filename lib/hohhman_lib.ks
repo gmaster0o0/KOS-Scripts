@@ -6,6 +6,13 @@ function hohmannDv {
 	return sqrt(body:mu / r1) * (sqrt( (2 * r2) / (r1 + r2) ) - 1).
 }
 
+function hohmannDvEllipse {
+	parameter r1 is (ship:obt:semimajoraxis + ship:obt:semiminoraxis) / 2.
+	parameter r2 is (target:obt:semimajoraxis + target:obt:semiminoraxis) / 2.
+
+	return sqrt(body:mu / r2) * (1 - sqrt( (2 * r1) / (r1 + r2) )).
+}
+
 function deltaVToPeriapsis {
   return hohmannDv(body:radius + periapsis,body:radius + apoapsis).
 }

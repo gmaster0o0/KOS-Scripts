@@ -26,7 +26,6 @@ copyAllFilesToBoot().
 
 cd("ZOS").
 
-
 //FUNCTIONS
 function copyAllFilesToBoot {
 
