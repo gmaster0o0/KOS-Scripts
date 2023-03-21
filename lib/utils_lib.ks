@@ -17,7 +17,9 @@ function lngToDegrees {
 }
 
 function getTargetAngle {
-  return lngToDegrees(lngToDegrees(lngToDegrees(target:longitude) - lngToDegrees(ship:longitude))).
+	parameter obj1 is ship.
+	parameter obj2 is target.
+  return lngToDegrees(lngToDegrees(lngToDegrees(obj2:longitude) - lngToDegrees(obj1:longitude))).
 }
 
 function utilReduceTo360 {
@@ -25,6 +27,8 @@ function utilReduceTo360 {
 	return ang - 360 * floor(ang / 360).
 }
 
+//v1 - Vector
+//v2 - vector
 function signAngle {
 	parameter v1.
 	parameter v2.
@@ -77,8 +81,10 @@ function getNormalOfObjectOrbit {
 
 	local positionVector is object:body:position - object:position.
 	local velocityVector is object:velocity:orbit.
-	if object:status = "LANDED" {
-		set velocityVector to object:velocity:surface.
+	if object:istype("vessel"){
+		if object:status = "LANDED" {
+			set velocityVector to object:velocity:surface.
+		}
 	}
 	local normalVec is vCrs(velocityVector, positionVector):normalized.
 	return normalVec.
@@ -157,12 +163,16 @@ function getBurnVector {
 function getNormalOfObjectOrbitAt {
 	parameter object.
   parameter utime is time:seconds.
+	print object.
 	local positionVector is object:body:position - positionAt(object,utime).
 	local velocityVector is velocityAt(object,utime):orbit.
-	vecDrawAdd(vecDrawLex,positionAt(object,utime),velocityVector*10000	,green,"V"+object:name).
-	if object:status = "LANDED" {
-		set velocityVector to velocityAt(object,utime):surface.
+	//vecDrawAdd(vecDrawLex,positionAt(object,utime),positionVector*-1	,blue,"P"+object:name).
+	if object:istype("vessel"){
+		if object:status = "LANDED" {
+			set velocityVector to velocityAt(object,utime):surface.
+		}
 	}
+	//vecDrawAdd(vecDrawLex,positionAt(object,utime),velocityVector*1000	,green,"V"+object:name).
 	local normalVec is vCrs(velocityVector, positionVector):normalized.
 	return normalVec.
 }
@@ -177,4 +187,11 @@ function relativeIncAt {
 	local obj2Norm is getNormalOfObjectOrbitAt(obj2,utime).
 
 	return vang(obj1Norm,obj2Norm).
+}
+
+function getOrbitPeriod {
+	parameter semiMajorAxis is obt:semimajoraxis.
+	parameter centerBody is body.
+
+	return 2 * constant:pi * sqrt(semiMajorAxis^3 / centerBody:mu).
 }

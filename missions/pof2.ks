@@ -1,5 +1,3 @@
-//interplanetary transfer POF
-
 runPath("../lib/ui_lib.ks").
 runPath("../lib/staging_lib.ks").
 runPath("../lib/launch_lib.ks").
@@ -12,11 +10,11 @@ runPath("../lib/utils_lib.ks").
 runPath("../lib/node_lib.ks").
 runPath("../lib/vecDraw_lib.ks").
 
+
+local vecDrawLex is lexicon().
 clearScreen.
 clearVecDraws().
-
 parameter orbitalName to "Duna".
-parameter targetPE is 60000.
 
 if hasTarget {
   set orbitalName to target:name.
@@ -50,44 +48,17 @@ print "angleChangeRate: " + angleChangeRate.
 
 local WaitDuration is utilReduceTo360(relativeAngle - phaseAngel)/angleChangeRate.
 print time(WaitDuration):day + "Days " + time(WaitDuration):hour +"Hours "+ time(WaitDuration):second + "S".
-set EllipticalObtSMA to (departureOrbitRadius+arrivalOrbitRadius)/2.
+local wtime is WaitDuration + time:seconds.
+//kuniverse:timewarp:warpTo(time:seconds+WaitDuration).
+//print mytime:calendar.
+//local wtime is time:seconds.
 
-set DepartureObtv to ship:body:obt:velocity:obt:mag.
-set ParkingObtv to ship:obt:velocity:orbit:mag.
-print "ParkingObtv:" + ParkingObtv.
-set EllipticalObtv to sqrt(ship:body:body:mu*(2/departureOrbitRadius-1/EllipticalObtSMA)).
-print "EllipticalObtv: " + EllipticalObtv.
-set vInfinity to EllipticalObtv-DepartureObtv.
+local VecK is positionAt(ship:body,wtime) - positionAt(sun,wtime).
+print VecK:mag.
+local VecD is positionAt(target,wtime) - positionAt(sun,wtime).
+print VecD:mag.
+vecDrawAdd(vecDrawLex,positionAt(sun,wtime), vecK,cyan,"KPOS").
+vecDrawAdd(vecDrawLex,positionAt(sun,wtime), vecD,red,"TPOS").
 
-print "vInfinity: " + vInfinity.
 
-set EscapeObtSMA to -ship:body:mu/vInfinity^2.
-set EscapeObtv to sqrt(ship:body:mu*(2/parkingOrbitRadius-1/EscapeObtSMA)).
 
-print "EscapeObtv: " + EscapeObtv.
-set BurnDeltav to EscapeObtv-ParkingObtv.
-print "BurnDeltav: " + BurnDeltav.
-
-add node(time:seconds + WaitDuration,0,0,BurnDeltav).
-
-local function calculateRelativeAngle {
-  local angle is 0.
-  if ship:body:name = "SUN" return 0.
-  set angle to
-    (
-      arrivalOrbital:obt:longitudeofascendingnode
-        +arrivalOrbital:obt:argumentofperiapsis
-        +arrivalOrbital:obt:trueanomaly
-    )
-    -
-      (
-        ship:body:obt:longitudeofascendingnode
-          +ship:body:obt:argumentofperiapsis
-          +ship:body:obt:trueanomaly
-      ).
-
-  set angle to mod(angle,360).
-  if angle < 0
-    set angle to angle+360.
-  return angle. 
-} 

@@ -29,7 +29,7 @@ function suicideBurn {
   local th is 0.
   local st is srfRetrograde.
   lock throttle to th.
-  lock steering to st.
+  lock steering to srfRetrograde.
   rcs on.
   panels off.
   gear on.
@@ -44,7 +44,7 @@ function suicideBurn {
     vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
     vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)),RED,"VS").
     set th to breakingPID:UPDATE(time:seconds,groundDistance - stopDist).
-    set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
+    //set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
     set done to groundDistance < minALT.
   }
   breakingPID:reset().

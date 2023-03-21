@@ -32,6 +32,7 @@ function gravityTurn {
       }
     }
     print round(maxQ,5) at (80,5).
+    print round(getPitch(targetApo),1) at (80,7).
     checkBoosters().
   }
 }
@@ -39,7 +40,7 @@ function gravityTurn {
 local function getPitch {
   parameter targetApo.
   if body:atm:height > 0 {
-     return max(8,90*(1-apoapsis/body:atm:height)).
+     return max(3,90*(1-apoapsis/body:atm:height)).
   }
   return max(3,90*(1-apoapsis/targetApo)).
 }

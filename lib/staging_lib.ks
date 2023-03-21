@@ -134,6 +134,7 @@ function activateEngines {
       doSafeStage().
     }
   }
+  return engineList.
 }
 
 function doSafeStage {

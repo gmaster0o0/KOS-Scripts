@@ -12,7 +12,7 @@ parameter killHorSpeed is false.
 //STARTING HERE
 waitForStart().
 activateEngines().
-deOrbitBurn(0).
+//deOrbitBurn(0).
 if killHorSpeed {
   killhorizontalspeed().  
 }

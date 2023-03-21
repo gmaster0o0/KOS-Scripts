@@ -1,5 +1,5 @@
 function cancelWarpBeforeEta {
-  parameter currentEta.
+  parameter currentEta. 
   parameter before.
   parameter threshold is 1.2.
   wait 0.1.
@@ -19,4 +19,11 @@ function getWarprate {
     return kuniverse:TimeWarp:RAILSRATELIST.
   }
   return kuniverse:TimeWarp:PHYSICSRATELIST.
+}
+
+function warpToNode {
+  parameter n, bt is 0.
+  printO("NODE", "Warping to Burn Point:["+round(bt,2)+"]").
+	warpto(time:seconds + n:eta - bt/2 - 10).
+	wait until warp <= 0.
 }
