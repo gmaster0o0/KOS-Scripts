@@ -189,7 +189,7 @@ function relativeIncAt {
 	return vang(obj1Norm,obj2Norm).
 }
 
-function getOrbitPeriod {
+function getOrbitalPeriod {
 	parameter semiMajorAxis is obt:semimajoraxis.
 	parameter centerBody is body.
 

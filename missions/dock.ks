@@ -24,7 +24,7 @@ print "Direction  :" at(40,16).
 print "PeriVel    :" at(40,17).
 
 checkRelVel().
-RCS ON.
+rcs ON.
 evadeTarget(nogodist).
 
 set target to selectTargetPort().
@@ -35,8 +35,10 @@ approach(target, dockingPort,10).
 killRelVelPrec().
 local steer is selectPortRotation(target).
 approach(target,dockingPort,0,steer).
+
+//Finish docking.
 sas off.
-SET SHIP:CONTROL:NEUTRALIZE TO TRUE.
-WAIT 5.
+set ship:control:neutralize to true.
+wait 5.
 sas on.
-RCS OFF.
+rcs OFF.

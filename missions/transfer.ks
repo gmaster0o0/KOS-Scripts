@@ -19,7 +19,7 @@ runPath("../lib/change_orbit_lib.ks").
 parameter missionStatus is 0.
 parameter autoWarp is false.
 
-local orbitLib is ChangeOrbitLib().
+local orbitLib is ChangeOrbitLib(false,false).
 local nodeLib is NodeLib(autoWarp).
 
 local targetBody is MUN.
@@ -70,8 +70,6 @@ if(missionStatus = 9) {
   set missionStatus to 10.
 }
 if(missionStatus = 10){
-  //lowerApoapsis().
-  //nodeLib:removeAll().
   //orbitLib:hyperbolicToElliptic().
   orbitLib:hyperbolicToCircular().
 }

@@ -1,3 +1,5 @@
+//TODO landing slope checking.
+
 parameter verbose is true.
 
 local vecDrawLex is lex().

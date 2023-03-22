@@ -1,33 +1,31 @@
-function TransferLib {
-  local function hohhmanTransfer {
+//TODO refactor this.
 
-  }
+function TransferLib {
+  parameter vecDebug is false.
+  parameter verbose is false.
+  
+  local vecDrawLex is lex().
   
   local function transferTo {
-    parameter targetAP is target:obt:apoapsis.
-    
-    local dv to initHohhmanDV().
-    local bt to burnTimeForDv(dv).
   }
 
   return lexicon(
-    "hohhmanTransfer",hohhmanTransfer@
+    "transferTo",transferTo@
   ).
 }
-
-
-
+//LEGACY
 local verbose is false.
+local hohhmanLib is HohhmanLib().
 
 function waitForTransferWindow {
   local tAngVel is 360/target:obt:period.
   local sAngVel is 360/ship:obt:period.
   local angleChangeRate is abs(tAngVel-sAngVel).
-  local dv to initHohhmanDV().
+  local dv to hohhmanLib:transferDeltaV().
   local bt to burnTimeForDv(dv).
-  local ht to hohmanmTime().
+  local ht to hohhmanLib:hohmanmTime().
 
-  local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
+  local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohhmanLib:hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
   printO("TRANSFER","ETA" + round(ETAofTransfer,1)).
@@ -41,7 +39,7 @@ function waitForTransferWindow {
     set sAngVel to 360/ship:obt:period.
     local targetAng to getTargetAngle().
     set angleChangeRate to abs(tAngVel-sAngVel).
-    set ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
+    set ETAofTransfer to utilReduceTo360(getTargetAngle() - hohhmanLib:hohmanmTime()) / angleChangeRate.
     print round(targetAng,1) at (80,1).
     print round(ETAofTransfer,1) at (80,2).
     print round(angleChangeRate,2) at (80,3).
@@ -177,7 +175,7 @@ function doOrbitTransfer {
   print "AP/TAP:" at (60,1).
   print "dv:" at (60,2).
   print "bt:" at (60,3).
-  local dv is initHohhmanDV().
+  local dv is hohhmanLib:transferDeltaV().
   local velStart is ship:velocity:orbit:mag.
   //avoid body change before arrive
   local targetBody is target.

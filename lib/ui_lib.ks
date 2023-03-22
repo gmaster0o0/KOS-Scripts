@@ -1,3 +1,5 @@
+//TODO refactor
+
 function printO {
   parameter part.
   parameter msg.
