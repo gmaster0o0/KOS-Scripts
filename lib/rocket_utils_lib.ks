@@ -1,4 +1,4 @@
-
+//library for rocket parameter calculations
 function burnTimeForDv {
   parameter dv.
 

@@ -1,3 +1,5 @@
+//Math and util functions
+
 local vecDrawLex is lexicon().
 
 function isCloseTo {
@@ -9,7 +11,7 @@ function isCloseTo {
 	//print "|" + round(targetNumber,3) + " - " + round(currentNumber,3) + "| < " + threshold at (5,25).
 	return abs(targetNumber - currentNumber) < threshold.
 }
-
+// convert the (-180,+180) to (0,360)
 function lngToDegrees {
   parameter lng.
 
@@ -33,7 +35,7 @@ function signAngle {
 	parameter v1.
 	parameter v2.
 	parameter pn.
-	return arcTan2(vDot(vCrs(v1,v2),pn),vDot(v1,v2)).
+	return arcTan2(vDot(vCrs(v2,v1),pn),vDot(v1,v2)).
 }
 
 //calc gravity over altitude
@@ -54,6 +56,26 @@ function avgGrav {
   parameter dist is altitude.
 
   return (gravity(startAlt) + gravity(startAlt - dist))/2.
+}
+//get the rotation of the ship around the body in given timeframe
+function getShipOrbitalRotationAroundBody {       
+	parameter UT is time:seconds + 10.
+
+	local pos to (positionat(ship, UT) - body:position).
+	local vel to (velocityat(ship, UT):orbit).
+
+	return lookdirup(vel, vcrs(vel, pos)).
+}
+
+//get body rotation between two time.
+// return with direction
+function getBodyRotation {
+    parameter UT, reference is time:seconds.
+
+    local bodyRotationAxis to body:angularvel:normalized.
+    local bodyRotationVel to constant:radtodeg * body:angularvel:mag.
+
+    return angleaxis(bodyRotationVel * (UT - reference), bodyRotationAxis).
 }
 
 //Eccentricity anomaly from true anomaly
@@ -119,10 +141,16 @@ function relativeInc {
 
 	return vang(obj1Norm,obj2Norm).
 }
+//TODO TAofDNNODE
+//TODO craft and craft's orbit
 //true anomaly of AN node
+//param obj1: craft
+//param obj2: craft or body
+//param obj1TA: true anomaly of obj1
 function TAofANNode {
 	parameter obj1.
 	parameter obj2.
+	parameter obj1TA is obj1:orbit:trueAnomaly.
 
 	local obj1Norm is getNormalOfObjectOrbit(obj1).
 	local obj2Norm is getNormalOfObjectOrbit(obj2).
@@ -136,7 +164,7 @@ function TAofANNode {
 		set angObjNode to 360 - angObjNode.
 	}
 
-	return mod(angObjNode + obj1:orbit:trueAnomaly,360).
+	return mod(angObjNode + obj1TA,360).
 }
 
 function getBurnVector {
@@ -163,7 +191,8 @@ function getBurnVector {
 function getNormalOfObjectOrbitAt {
 	parameter object.
   parameter utime is time:seconds.
-	print object.
+	
+	//print object.
 	local positionVector is object:body:position - positionAt(object,utime).
 	local velocityVector is velocityAt(object,utime):orbit.
 	//vecDrawAdd(vecDrawLex,positionAt(object,utime),positionVector*-1	,blue,"P"+object:name).
@@ -174,6 +203,7 @@ function getNormalOfObjectOrbitAt {
 	}
 	//vecDrawAdd(vecDrawLex,positionAt(object,utime),velocityVector*1000	,green,"V"+object:name).
 	local normalVec is vCrs(velocityVector, positionVector):normalized.
+
 	return normalVec.
 }
 
@@ -194,4 +224,58 @@ function getOrbitalPeriod {
 	parameter centerBody is body.
 
 	return 2 * constant:pi * sqrt(semiMajorAxis^3 / centerBody:mu).
+}
+//Get ETA for the given altitude of the given orbit.
+//only eliptical orbit
+//TODO hyperbolic orbit too.
+function ETAtoAltitude {
+	parameter targetOrbit, referenceTrueAnomaly, targetAltitude is 0.
+
+	set targetAltitude to targetAltitude + targetOrbit:body:radius.
+	if targetOrbit:eccentricity <=1 and targetOrbit:body:radius < targetAltitude {
+		//r = a * (1-e^2/(1+e*cosv)) -> v = arccos(a*(1-e^2)-r)/e*r)
+		//get the true anomaly where the vessel reach the target altitude
+		//print round((targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude) / (targetOrbit:eccentricity * targetAltitude),5).
+		//print (targetOrbit:eccentricity * targetAltitude).
+		//print(targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude).
+
+		local altitudeTrueAnomaly to arccos(round((targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude) / (targetOrbit:eccentricity * targetAltitude),5)).
+		return timeBetweenTrueAnomalies(referenceTrueAnomaly, altitudeTrueAnomaly, targetOrbit:eccentricity, targetOrbit:period).
+	}
+
+	return 0.
+}
+
+function timeBetweenTrueAnomalies {
+	parameter TA1, TA2, eccentricity, period.
+
+	local meanAnomaly1 is MAFromTA(eccentricity,TA1).
+	local meanAnomaly2 is MAFromTA(eccentricity,TA2).
+
+	return (lngToDegrees(meanAnomaly2-meanAnomaly1)/360) * period.
+}
+
+function perimeterPerDegreee {
+	parameter targetBody is body.
+
+	return (2 * constant:pi * targetBody:radius)/360.
+}
+
+//calculate the ETA of DN or AN and returnin the direction
+//function for inclination change
+function getClosestNodeETA {
+	parameter targetOrbit is orbit.
+
+	local ETAtoDN to ETAtoTA(targetOrbit, 180-targetOrbit:argumentofperiapsis).
+	local ETAtoAN to ETAtoTA(targetOrbit, 360-targetOrbit:argumentofperiapsis).
+	if (ETAtoAN > ETAtoDN) {
+		return lexicon(
+			"direction",-1,
+			"eta", ETAtoDN
+		).
+	}
+		return lexicon(
+			"direction",1,
+			"eta", ETAtoAN
+		).
 }

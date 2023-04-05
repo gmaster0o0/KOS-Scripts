@@ -44,6 +44,7 @@ function suicideBurn {
     local stopDist is calculateStoppingDistance().
     vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface,YELLOW,"BV").
     vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
+    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface:normalized*calcImpactTime(),GREEN,"D").
     vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)),RED,"VS").
     set th to breakingPID:UPDATE(time:seconds,groundDistance - stopDist).
     //set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
@@ -102,6 +103,10 @@ local function createDisplay {
     print "P_INP" at (40,10).
     print "SurfaceSpeed" at (40,12).
     print "Slope" at (40,13).
+    print "stopDistanceX" at (40,14).
+    print "stopDistanceY" at (40,15).
+    print "angleOfAttack" at (40,16).
+    print "compensation" at (40,17).
   }
 }
 
@@ -138,7 +143,7 @@ local function fdata {
     print maxAccUp(altitude) at (60,3).
     print gravity(altitude) at (60,4).
     print ffs at (60,5).
-    //print calcImpactTime() at (60,6).
+    print calcImpactTime() at (60,6).
     print bt at (60,7).
     print stopDistance at (60,8).
     print throttle at (60,9).
@@ -185,3 +190,11 @@ local function createTriangle {
   
   ).
 } 
+
+local function calcImpactTime {
+  parameter height is ship:bounds:bottomaltradar.
+  parameter v0 is vxcl(up:vector, ship:velocity:surface):mag.
+  local avgGrav is ((gravity(3000+body:radius) + gravity(altitude)/2)).
+  local d is sqrt(2*height/avgGrav)*v0.
+  return d.
+}

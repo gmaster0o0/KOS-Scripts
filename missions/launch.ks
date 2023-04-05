@@ -38,7 +38,6 @@ print "|Pitch:       " at (60,7).
 print "=====================================" at (60,8).
 print "========Event log============================".
 
-local startingDV is ship:deltaV:current.
 local _circ is ChangeOrbitLib().
 local _node is NodeLib(true).
 
@@ -51,13 +50,11 @@ if(missionStatus = 2) {
   set missionStatus to 3.
 }
 if(missionStatus = 3) {
+  _circ:ellipseToCircle().
   waitUntilEndOfAtmosphere(unpack,targetApo*1000).
   set missionStatus to 4.
 }
 if(missionStatus = 4) {
-  _circ:ellipseToCircle().
   _node:execute().
   set missionStatus to 5.
 }
-//LOG  (startingDV - ship:deltaV:current) to "0:/dv.txt". 
-print startingDV - ship:deltaV:current.

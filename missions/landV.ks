@@ -10,8 +10,10 @@ runPath("../lib/vecDraw_lib.ks").
 
 parameter killHorSpeed is false.
 //STARTING HERE
+
 waitForStart().
 activateEngines().
+
 //deOrbitBurn(0).
 if killHorSpeed {
   killhorizontalspeed().  

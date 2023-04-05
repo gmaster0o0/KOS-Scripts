@@ -1,10 +1,12 @@
+local hohhmanLib is HohhmanLib().
+
 function changePeriod {
   local targetPeriod is target:obt:period.
   local newPeriod is targetPeriod + targetPeriod * (360-getTargetAngle())/360.
 
   local newSemiMajorAxis is ((body:mu * newPeriod^2)/(4 * constant:pi))^(1/3).
   local newSemiMinorAxis is newSemiMajorAxis * sqrt(1-obt:eccentricity).
-  local dv is hohmannDv((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
+  local dv is hohhmanLib:transferDeltaV((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
   
   local bt is burnTimeForDv(dv).
   local correction is 1.
@@ -20,7 +22,7 @@ function changePeriod {
   //-1: New 10 < current:15 => C=>9 N=10,  9>10 NEMOK.... -9 > -10
   until ship:obt:period * correction > correction * newPeriod {
   }
-  printO("REND", "Pálya módosítva. Új keringési idő:" + newPeriod).
+  printO("REND", "Orbit modified. New period time:" + newPeriod).
   lock throttle to 0.
 
   waitToPeriapsis().
@@ -39,7 +41,7 @@ function  approcheTarget {
       waitTheClosestDistance().
     }
   }
-  printO("REND", "Cel tavolsag elerve. Hiba" + abs(distanceGoal - target:distance)).
+  printO("REND", "Target distance reached. Error:" + abs(distanceGoal - target:distance)).
 }
 
 function killRelVel {
@@ -49,10 +51,10 @@ function killRelVel {
   lock steering to relVelVec.
   local maxSpeed is relVelVec:mag.
   local prevSpeed is relVelVec:mag.
-  wait until steeringManager:ANGLEERROR < 1.
+  wait until abs(steeringManager:ANGLEERROR < 1).
   local th is 1.
 
-  printO("REND", "Relativ sebesseg eliminalasa:"+ maxSpeed).
+  printO("REND", "Eliminate relative velocity:"+ maxSpeed).
   until relVelVec:mag < velGoal or prevSpeed - relVelVec:mag < -1 {
     wait 0.1.
     set prevSpeed to relVelVec:mag.
@@ -62,7 +64,7 @@ function killRelVel {
   }
 
   lock throttle to 0.
-  printO("REND", "Relativ sebesseg eliminalva. Hiba:" + relVelVec:mag).
+  printO("REND", "Relative velocity eliminated. Error:" + relVelVec:mag).
 
   return maxSpeed.
 }

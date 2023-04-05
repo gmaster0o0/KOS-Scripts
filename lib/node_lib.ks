@@ -49,7 +49,7 @@ function NodeLib {
     //now we need to wait until the burn vector and ship's facing are aligned
     printp("Ship aligning", 12).
     wait until vang(ship:facing:vector,_node:burnvector) < 0.25.
-
+    printp("Wait for arriving", 12).
     //the ship is facing the right direction, let's wait for our burn time
     printO("NODE","Burn Starts: " + round(_node:eta - burnTime/2,2)).
 

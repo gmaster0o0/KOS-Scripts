@@ -18,6 +18,7 @@ local verbose is false.
 local hohhmanLib is HohhmanLib().
 
 function waitForTransferWindow {
+  clearscreen.
   local tAngVel is 360/target:obt:period.
   local sAngVel is 360/ship:obt:period.
   local angleChangeRate is abs(tAngVel-sAngVel).
@@ -32,7 +33,7 @@ function waitForTransferWindow {
   //addalarm("raw", time:seconds + max(30,ETAofTransfer - bt), "Transfer window", "Ready for transfer").
   add node(time:seconds + ETAofTransfer,0,0,dv).
   lock steering to prograde.
-  wait until steeringManager:ANGLEERROR < 1.
+  abs(steeringManager:ANGLEERROR < 1).
   until ETAofTransfer < bt/2 {
     wait 1.
     set tAngVel to 360/target:obt:period.
@@ -125,7 +126,7 @@ function escapeTransfer {
   
   local _transfer is calculateReturnTransfer(PE_GOAL).
   lock steering to prograde.
-  wait until steeringManager:ANGLEERROR < 1.
+  wait until abs(steeringManager:ANGLEERROR < 1).
   local burnTime to burnTimeForDv(_transfer["dv"]).
   local PHASE_ETA is _transfer["eta"].
 
@@ -143,7 +144,7 @@ function escapeTransfer {
     cancelWarpBeforeEta(PHASE_ETA, burnTime).
   }
 
-  wait until steeringManager:ANGLEERROR < 1.
+  wait until abs(steeringManager:ANGLEERROR < 1).
 
   printO("TRANSFER","Pályamódosítás megkezdése[DV]:"+_transfer["dv"]+"[BT]:"+burnTime).
   local th to 1.
@@ -167,7 +168,7 @@ function doOrbitTransfer {
   parameter PE_GOAL is max(body:atm:height * 1.2, body:radius*0.2).
 
   lock steering to prograde.
-  wait until steeringManager:ANGLEERROR < 1.
+  wait until abs(steeringManager:ANGLEERROR < 1).
   local th is 1.
   lock throttle to th.
   printO("TRANSFER","Pályamódosítás megkezdése").
@@ -204,7 +205,8 @@ function avoidCollision {
   parameter minPer is max(body:atm:height * 1.2, body:radius*0.2).
   if periapsis < minPer {
     lock steering to heading (90,0).
-    wait until steeringManager:ANGLEERROR < 1.
+    print steeringManager:ANGLEERROR.
+    wait until abs(steeringManager:ANGLEERROR < 1).
     lock throttle to 1.
     until periapsis > minPer {
       if periapsis / minPer > 0.9 {

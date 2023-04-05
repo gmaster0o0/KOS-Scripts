@@ -122,7 +122,7 @@ function ChangeOrbitLib {
 
     if hasTarget or targetInc = "" {
       set targetObj to target.
-      set relInc to getRelInc().
+      set  relInc to getRelInc().
       set ANTA to TAofANNode(ship,targetObj).
       set ETAto to ETAtoTA(ship:orbit,ANTA).
 
@@ -132,24 +132,27 @@ function ChangeOrbitLib {
       set bt to burnTimeForDv(dv).
     
       print "Waiting for AN"  at (80,1).
-      print round(ANTA) at(80,2).
+      print round(ETAto,1) at (80,3). 
+      print round(velAt:mag,1) at (80,4).
+      print round(bt,1) at(80,5).
+      print round(relInc,2) at (80,7).
+
       add nodeLib:FromVector(burnVec,ETAto + time:seconds + bt/2).
     }else{
       set relInc to getRelInc(targetInc).
-      if orbit:eccentricity > 1 { 
+      local nodeETA to getClosestNodeETA().
+      if orbit:eccentricity > 1 {
+        //TODO check this.
         set ETAto to 60.
       }else{
-        set ETAto to eta:apoapsis.
-     }
-  
-      set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
+        set ETAto to nodeETA:eta.
+      }
 
+      set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
       set dv to 2 * velAt:mag * sin (relInc/2).
-      local nv is dv * cos(relInc/2).
+      local nv is dv * cos(relInc/2) * nodeETA:direction.
       local pv is dv * -sin(relInc/2).  
-      set burnVec to v(0,nv,pv).
-      set bt to burnTimeForDv(burnVec:mag).
-      add node(ETAto + time:seconds + bt/2, 0, nv,pv).
+      add node(ETAto + time:seconds, 0, nv,pv).
       
       print "Waiting for AP" at (80,1).
     }

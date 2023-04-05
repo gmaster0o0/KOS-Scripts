@@ -20,13 +20,14 @@ parameter missionStatus is 0.
 parameter autoWarp is false.
 
 local orbitLib is ChangeOrbitLib(false,false).
-local nodeLib is NodeLib(autoWarp).
+local nodeLib is NodeLib(true).
 
 local targetBody is MUN.
 
 if hasTarget {
   set targetBody  to target.
 }
+local targetPE is targetBody:atm:height + 10000.
 
 //LAUNCH TO PARKING ORBIT.
 if missionStatus < 5 {
@@ -66,7 +67,7 @@ if(missionStatus = 8) {
   set missionStatus to 9.
 }
 if(missionStatus = 9) {
-  avoidCollision().
+  avoidCollision(targetPE).
   set missionStatus to 10.
 }
 if(missionStatus = 10){

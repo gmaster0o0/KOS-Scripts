@@ -26,7 +26,7 @@ function getSolarProcessor {
     }
   }
 }
-
+//Do booster stage and sending a undock command to the booster processor
 function doBoosterStaging {
   parameter proc.
 
@@ -37,7 +37,7 @@ function doBoosterStaging {
   }
   set proc to processor(proc:tag).
   if not proc:connection:sendmessage(message) {
-    printO("STAGING", "Nem sikerült elküldeni a parancsot").
+    printO("STAGING", "Command sending was unsuccessful").
   }
 }
 
@@ -139,7 +139,7 @@ function activateEngines {
 
 function doSafeStage {
   wait until stage:ready.
-  printO("STAGING","Fokozat szétválasztva").
+  printO("STAGING","Stage safely separated").
   stage.
 }
 
