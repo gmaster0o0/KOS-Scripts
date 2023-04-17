@@ -161,7 +161,7 @@ function ChangeOrbitLib {
   local function getRelInc {
     parameter targetInc is "".
     if hasTarget or targetInc = "" {
-      return relativeInc(ship,targetObj).
+      return relativeIncAt(ship,targetObj).
     }else{
       return targetInc - obt:inclination.
     }

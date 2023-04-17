@@ -34,7 +34,7 @@ function utilReduceTo360 {
 function signAngle {
 	parameter v1.
 	parameter v2.
-	parameter pn.
+	parameter pn is vCrs(v1:normalized,v2:normalized):normalized.
 	return arcTan2(vDot(vCrs(v2,v1),pn),vDot(v1,v2)).
 }
 
@@ -70,12 +70,9 @@ function getShipOrbitalRotationAroundBody {
 //get body rotation between two time.
 // return with direction
 function getBodyRotation {
-    parameter UT, reference is time:seconds.
+    parameter endTime, startTime is time:seconds.
 
-    local bodyRotationAxis to body:angularvel:normalized.
-    local bodyRotationVel to constant:radtodeg * body:angularvel:mag.
-
-    return angleaxis(bodyRotationVel * (UT - reference), bodyRotationAxis).
+    return -angleaxis(constant:radtodeg * body:angularvel:mag * (endTime - startTime), body:angularvel:normalized).
 }
 
 //Eccentricity anomaly from true anomaly
@@ -97,6 +94,30 @@ function MAFromTA {
   
 	return lngToDegrees(MA).
 }
+
+function getTrueAnomalyAt{
+  parameter orbitable, universalTime.
+
+  local positionVector IS positionAt(orbitable,universalTime) - orbitable:body:position.
+
+  local TA IS getTrueAnomaly(orbit:semimajoraxis,orbit:eccentricity,positionVector:mag).
+
+  if positionAt(orbitable,universalTime+1):mag < positionVector:mag { 
+		return 360 - TA.
+	}
+
+  return TA.
+}
+
+//calculate the true anomaly
+//r = a*(1-e*e)/1+e*cosV
+//rearrange => cosV = (a*(1-e*e)-r)/(e*r)
+function getTrueAnomaly{
+  parameter sma, ecc, rad.
+
+  return arcCos( ((sma * (1 - ecc^2)) - rad)/ (ecc * rad)).
+}
+
 //normalVector of the orbit based on a object
 function getNormalOfObjectOrbit {
 	parameter object.
@@ -132,15 +153,23 @@ function ETAtoTA {
 	return mod((taTime - currentTime) + orb:period,orb:period).
 }
 //relative inclination between 2 object
-function relativeInc {
+function relativeIncAt {
 	parameter obj1.
 	parameter obj2.
+  parameter utime is time:seconds.
 
-	local obj1Norm is getNormalOfObjectOrbit(obj1).
-	local obj2Norm is getNormalOfObjectOrbit(obj2).
+	local obj1Norm is getNormalOfObjectOrbitAt(obj1,utime).
+	local obj2Norm is getNormalOfObjectOrbitAt(obj2,utime).
 
 	return vang(obj1Norm,obj2Norm).
 }
+
+function orbitalPositionVector {
+	parameter orbitable, utime, parentOrbitable is orbitable:body.
+
+		return positionAt(orbitable,utime) - parentOrbitable:position.
+}
+
 //TODO TAofDNNODE
 //TODO craft and craft's orbit
 //true anomaly of AN node
@@ -207,18 +236,6 @@ function getNormalOfObjectOrbitAt {
 	return normalVec.
 }
 
-//relative inclination between 2 object
-function relativeIncAt {
-	parameter obj1.
-	parameter obj2.
-  parameter utime is time:seconds.
-
-	local obj1Norm is getNormalOfObjectOrbitAt(obj1,utime).
-	local obj2Norm is getNormalOfObjectOrbitAt(obj2,utime).
-
-	return vang(obj1Norm,obj2Norm).
-}
-
 function getOrbitalPeriod {
 	parameter semiMajorAxis is obt:semimajoraxis.
 	parameter centerBody is body.
@@ -240,6 +257,7 @@ function ETAtoAltitude {
 		//print(targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude).
 
 		local altitudeTrueAnomaly to arccos(round((targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude) / (targetOrbit:eccentricity * targetAltitude),5)).
+		set altitudeTrueAnomaly to 360 - altitudeTrueAnomaly.
 		return timeBetweenTrueAnomalies(referenceTrueAnomaly, altitudeTrueAnomaly, targetOrbit:eccentricity, targetOrbit:period).
 	}
 
@@ -259,6 +277,32 @@ function perimeterPerDegreee {
 	parameter targetBody is body.
 
 	return (2 * constant:pi * targetBody:radius)/360.
+}
+
+//Get eccentricity vector for a vector
+//reference: https://en.wikipedia.org/wiki/Eccentricity_vector
+function getEccentricityVectorAt{
+	parameter orbitable is ship.
+	parameter utime is time:seconds.
+	
+	local velocityVector is velocityAt(orbitable,utime):orbit.
+	local positionVector is positionAt(orbitable,utime)-orbitable:body:position.
+	local mu is orbitable:body:mu.
+
+	return (velocityVector:mag^2/mu -1/positionVector:mag)*positionVector - vdot(positionVector,velocityVector)/mu*velocityVector.
+}
+
+function getTrueAnomalyOfVector {
+	parameter positionVector.
+	parameter eccentricityVector.
+	parameter velocityVector.
+
+	local TA is arcCos(eccentricityVector*positionVector/(positionVector:mag * eccentricityVector:mag)).
+	if positionVector * velocityVector < 0 {
+		return 360 - TA.
+	}
+	
+	return TA.
 }
 
 //calculate the ETA of DN or AN and returnin the direction

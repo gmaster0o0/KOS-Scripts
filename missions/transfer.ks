@@ -45,7 +45,7 @@ print "========Event log========" at(60,4).
 
 if(missionStatus = 5) {
   set target to targetBody.
-  local relInc is relativeInc(ship,targetBody).
+  local relInc is relativeIncAt(ship,targetBody).
   if (abs(relInc) > 0.01) {
     run changeinc.
   }
