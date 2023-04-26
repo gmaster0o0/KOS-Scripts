@@ -17,10 +17,10 @@ parameter unpack is true.
 
 if(missionStatus = 0) {
   clearScreen.
-  print "PRESS ABORT FOR LAUNCH!" at (30,10).
-  wait until abort.
+  print "PRESS AG1 FOR LAUNCH!" at (30,10).
+  wait until ag1.
   clearScreen.
-  set abort to false.
+  set ag1 to false.
   set missionStatus to 1.
 }
 

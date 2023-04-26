@@ -49,6 +49,7 @@ if(missionStatus = 5) {
   if (abs(relInc) > 0.01) {
     run changeinc.
   }
+  
   set missionStatus to 6.
 }
 
@@ -73,6 +74,7 @@ if(missionStatus = 9) {
 if(missionStatus = 10){
   //orbitLib:hyperbolicToElliptic().
   orbitLib:hyperbolicToCircular().
+  nodeLib:execute().
 }
 
 

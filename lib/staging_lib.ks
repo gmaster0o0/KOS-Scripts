@@ -54,6 +54,50 @@ function checkEngines {
   return empty.
 }
 
+function checkTanks {
+  local tanks to getStagedTanks().
+
+  if tanks:length = 0 {
+    return false.
+  }
+
+  local empty to true.
+  for t in tanks{
+    set empty to (empty and isTankEmpty(t)).
+  }
+  
+  return empty.
+}
+
+function isTankEmpty {
+  parameter t.
+  parameter fuelTypes is list("Oxidizer", "LiquidFuel").
+
+  for r in t:resources {
+    if(fuelTypes:contains(r:name)){
+      return r:amount < 0.01.
+    }
+  }.
+  return false.
+}
+
+function getStagedTanks {
+  local stagingTankFuels is list("LiquidFuel").
+  local fuelTanks to list().
+
+  for p in getStagedParts() {
+    for r in p:resources {
+      if stagingTankFuels:contains(r:name) {
+        if not fuelTanks:contains(p) {
+          fuelTanks:add(p).
+        }
+      }
+    }
+  }
+
+  return fuelTanks.
+}
+
 function getCurrentStageBoosters {
   local boosters to list().
   local engineList is list().
@@ -66,6 +110,10 @@ function getCurrentStageBoosters {
     }
   }
   return boosters.
+}
+
+function getCurrentStageTanks {
+
 }
 
 function getStagedPartsMass {
@@ -106,7 +154,7 @@ function getMaxStageNumber {
 }
 
 function checkBoosters {
-  if(checkEngines()){
+  if(checkEngines() or checkTanks()){
     local procs to getBoosterProcessors().
     for p in procs {
       doBoosterStaging(p).

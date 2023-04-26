@@ -118,7 +118,7 @@ local function calculateStoppingDistance {
   local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
   print compensation at (60,17).
   local groundVelVec is vxcl(up:vector, ship:velocity:surface).
-  local stopDistanceX is groundVelVec:mag^2 / (2 * (ship:availablethrust/ship:mass)).
+  local stopDistanceX is groundVelVec:sqrmagnitude / (2 * (ship:availablethrust/ship:mass)).
   local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
   print stopDistanceX at (60,14).
   print stopDistanceY at (60,15).

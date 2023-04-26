@@ -23,6 +23,8 @@ function waitToEnterToATM {
   printO("LANDING","Varunk aming az atmoszferaba erunk").
   lock  throttle to 0.
   lock steering to retrograde.
+  warpto(time:seconds+ ETAtoAltitude(ship:orbit,ship:orbit:trueanomaly, body:atm:height ) - 30).
+	wait until warp <= 0.
   until altitude < body:atm:height {
     flightData().
   }

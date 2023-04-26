@@ -10,7 +10,7 @@ function HohhmanLib {
 		}
 
 		//print sqrt(body:mu/r1)*(sqrt((2*r2/(r1+r2)))-1).
-		return sqrt(targetBody:mu / r1) * (sqrt( (2 * r2) / (r1 + r2) ) - 1).
+		return sqrt(body:mu / r1) * (sqrt( (2 * r2) / (r1 + r2) ) - 1).
 	}
 
 	local function hohhmanCircularizationDeltaV {
