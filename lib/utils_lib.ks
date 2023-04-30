@@ -252,22 +252,32 @@ function getOrbitalPeriod {
 //only eliptical orbit
 //TODO hyperbolic orbit too.
 function ETAtoAltitude {
-  parameter targetOrbit, referenceTrueAnomaly, targetAltitude is 0.
+  parameter targetOrbit is ship:orbit, referenceTrueAnomaly is ship:orbit:trueanomaly, targetAltitude is 0.
 
-  set targetAltitude to targetAltitude + targetOrbit:body:radius.
-  if targetOrbit:eccentricity <=1 {
+    // print targetOrbit:semimajoraxis.
+    // print targetOrbit:eccentricity.
+    // print targetOrbit:period.
+    // print targetAltitude.
+
+  if targetOrbit:eccentricity <=1 or (targetOrbit:periapsis > targetAltitude and targetAltitude > targetOrbit:apoapsis) {
     //r = a * (1-e^2/(1+e*cosv)) -> v = arccos(a*(1-e^2)-r)/e*r)
     //get the true anomaly where the vessel reach the target altitude
     //print round((targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude) / (targetOrbit:eccentricity * targetAltitude),5).
     //print (targetOrbit:eccentricity * targetAltitude).
     //print(targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude).
+    set targetAltitude to targetAltitude + targetOrbit:body:radius.
+    //print round((targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude) / (targetOrbit:eccentricity * targetAltitude),5).
+    
+    // print targetOrbit:apoapsis.
+    // print targetOrbit:periapsis.
+    // print targetAltitude - targetOrbit:body:radius.
 
     local altitudeTrueAnomaly to arccos(round((targetOrbit:semimajoraxis * (1 - targetOrbit:eccentricity^2) - targetAltitude) / (targetOrbit:eccentricity * targetAltitude),5)).
     set altitudeTrueAnomaly to 360 - altitudeTrueAnomaly.
     return timeBetweenTrueAnomalies(referenceTrueAnomaly, altitudeTrueAnomaly, targetOrbit:eccentricity, targetOrbit:period).
   }
 
-  return 0.
+  return -1.
 }
 
 function timeBetweenTrueAnomalies {
