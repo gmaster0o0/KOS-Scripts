@@ -3,7 +3,6 @@ function ChangeOrbitLib {
   parameter verbose is false.
 
   local vecDrawLex is lex().
-  local nodeLib is NodeLib().
   local hohhmanLib is HohhmanLib().
   
   local function ellipseToCircle {

@@ -1,8 +1,7 @@
 //NodeLib
 //@Description: Manipulate and execute nodes
 //TODO
-function NodeLib {
-  parameter autoWarp is false.
+global NodeLib is ({
 
   local vecDrawLex is lexicon().
   
@@ -35,6 +34,7 @@ function NodeLib {
   //@param {node} _node=nextNode executable node 
   local function executeNode {
     parameter _node is nextNode.
+    parameter autoWarp is false.
     
     lock throttle to 0.
     sas off.
@@ -151,4 +151,4 @@ function NodeLib {
     "fromVector", nodeFromVector@,
     "removeAll", removeNodes@
   ).
-}
+}):call().

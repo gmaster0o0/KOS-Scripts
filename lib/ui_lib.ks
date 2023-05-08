@@ -43,3 +43,12 @@ function drawVec {
   ).
   return vecD.
 }
+
+function lprint {
+  parameter value.
+  if value < 10 {
+    set value to "0"+value.
+  }
+
+  return value.
+}

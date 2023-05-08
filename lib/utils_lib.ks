@@ -58,7 +58,7 @@ function avgGrav {
   return (gravity(startAlt) + gravity(startAlt - dist))/2.
 }
 //get the rotation of the ship around the body in given timeframe
-function getShipOrbitalRotationAroundBody {       
+function  getShipOrbitalRotationAroundBody {       
   parameter UT is time:seconds + 10.
 
   local pos to (positionat(ship, UT) - body:position).
@@ -293,6 +293,13 @@ function perimeterPerDegreee {
   parameter targetBody is body.
 
   return (2 * constant:pi * targetBody:radius)/360.
+}
+
+
+function  getSurfaceDistance {
+  parameter v1,v2.
+
+  return perimeterPerDegreee()*vang(v1,v2).
 }
 
 //Get eccentricity vector for a vector

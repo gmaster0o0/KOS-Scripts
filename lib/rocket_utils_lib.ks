@@ -27,6 +27,7 @@ function burnTimeForDv {
   return totalBurningTime + stageBurningTime.
 }
 
+//calculate the final mass after burning for given deltaV
 function getFinalMass {
   parameter dv.
   parameter isp is calculateISP().
@@ -39,6 +40,7 @@ function getFinalMass {
   return m0 / constant:e ^ (dv / isp).
 }
 
+//get the burn time for deltaV from given ship parameters
 function getStageBurningTime {
   parameter dv.
   parameter isp is calculateISP().
@@ -53,6 +55,7 @@ function getStageBurningTime {
   return (m0-mf) / (thrust / isp ).
 }
 
+//calculate the avage ISP of engines of the given stage.
 function getAvarageISP {
   parameter stagenumber is stage:number.
 
@@ -62,6 +65,7 @@ function getAvarageISP {
   return calculateISP(thrust, stagedEngines).
 }
 
+//calculate the given stage thrust
 function getStageThrust {
   parameter stagenumber is stage:number.
 
@@ -73,7 +77,7 @@ function getStageThrust {
 
   return thrust.
 }
-
+//calculate the the given engines ISP
 function calculateISP {
   parameter totalThrust is getTotalThrust().
   parameter el is activateEngines().
@@ -90,6 +94,7 @@ function calculateISP {
   return totalThrust / totalFlowRate.
 }
 
+//sum total thrust of the active engines
 function getTotalThrust {
   local totalThrust is 0.
   local activeEngines is listActiveEngines().
@@ -100,11 +105,22 @@ function getTotalThrust {
   return totalThrust.
 }
 
+//calculate the thrust to reach the DV in given time
+function thrustFromBurnTime {
+    parameter dV, shipIsp, burnTime, shipMass.
+    
+    local finalMass to shipMass / (constant:e^(dV / shipIsp)).
+    local shipThrust to ((shipMass - finalMass) * shipIsp) / burnTime.
+
+    return shipThrust.
+}
+//list all engines in the craft
 function listEngines {
   list engines in elist.
   return elist.
 }
 
+//filter the active engines in the given engine list
 function listActiveEngines {
   local engineList is listEngines().
   local activeEngines is list().
@@ -116,6 +132,7 @@ function listActiveEngines {
   return activeEngines.
 }
 
+//Filter engines in the given stage from the give engine list
 function getStagedEngines {
   parameter stagenumber is stage:number.
 

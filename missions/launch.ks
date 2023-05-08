@@ -8,7 +8,7 @@ runPath("../lib/hohhman_lib.ks").
 runPath("../lib/utils_lib.ks").
 runPath("../lib/wait_lib.ks").
 runPath("../lib/warp_lib.ks").
-runPath("../lib/node_lib.ks").
+runOncePath("../lib/node_lib.ks").
 
 clearScreen.
 parameter missionStatus is 0.
@@ -39,7 +39,6 @@ print "=====================================" at (60,8).
 print "========Event log============================".
 
 local _circ is ChangeOrbitLib().
-local _node is NodeLib(true).
 
 if missionStatus = 1 {
   launch(3).
@@ -55,6 +54,6 @@ if(missionStatus = 3) {
   set missionStatus to 4.
 }
 if(missionStatus = 4) {
-  _node:execute().
+  nodeLib:execute(nextNode, true).
   set missionStatus to 5.
 }
