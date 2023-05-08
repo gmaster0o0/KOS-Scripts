@@ -1,10 +1,12 @@
+local hohhmanLib is HohhmanLib().
+
 function changePeriod {
   local targetPeriod is target:obt:period.
   local newPeriod is targetPeriod + targetPeriod * (360-getTargetAngle())/360.
 
   local newSemiMajorAxis is ((body:mu * newPeriod^2)/(4 * constant:pi))^(1/3).
   local newSemiMinorAxis is newSemiMajorAxis * sqrt(1-obt:eccentricity).
-  local dv is hohmannDv((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
+  local dv is hohhmanLib:transferDeltaV((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
   
   local bt is burnTimeForDv(dv).
   local correction is 1.
@@ -20,13 +22,61 @@ function changePeriod {
   //-1: New 10 < current:15 => C=>9 N=10,  9>10 NEMOK.... -9 > -10
   until ship:obt:period * correction > correction * newPeriod {
   }
-  printO("REND", "Pálya módosítva. Új keringési idő:" + newPeriod).
+  printO("REND", "Orbit modified. New period time:" + newPeriod).
   lock throttle to 0.
 
   waitToPeriapsis().
 }
 
-function waitTheClosestDistance {
+function  approcheTarget {
+  parameter distanceGoal is 50.
+  parameter turningTime is 10.
+  parameter fast is true.
+  
+  waitTheClosestDistance().
+  until target:distance < distanceGoal {
+    local lastVel to killRelVel().
+    decreaseDistance(distanceGoal, lastVel,turningTime).
+    if target:distance > 2000 or not fast{
+      waitTheClosestDistance().
+    }
+  }
+  printO("REND", "Target distance reached. Error:" + abs(distanceGoal - target:distance)).
+}
+
+function killRelVel {
+  parameter velGoal is 1.
+
+  local relVelVec to target:velocity:orbit - ship:velocity:orbit.
+  lock steering to relVelVec.
+  local maxSpeed is relVelVec:mag.
+  local prevSpeed is relVelVec:mag.
+  wait until abs(steeringManager:ANGLEERROR < 1).
+  local th is 1.
+
+  printO("REND", "Eliminate relative velocity:"+ maxSpeed).
+  until relVelVec:mag < velGoal or prevSpeed - relVelVec:mag < -1 {
+    wait 0.1.
+    set prevSpeed to relVelVec:mag.
+    set relVelVec to target:velocity:orbit - ship:velocity:orbit.
+    set th to relVelVec:mag / (ship:availableThrust/ship:mass).
+    lock throttle to th.
+  }
+
+  lock throttle to 0.
+  printO("REND", "Relative velocity eliminated. Error:" + relVelVec:mag).
+
+  return maxSpeed.
+}
+
+function finishRendezvous {
+  lock steering to target:direction.
+  wait 3.
+  unlock all.
+  sas on.
+}
+
+local function waitTheClosestDistance {
   local done is false.
 
   //diff > 0 novekszik
@@ -47,32 +97,7 @@ function waitTheClosestDistance {
   CLEARVECDRAWS().
 }
 
-function killRelVel {
-  parameter velGoal is 1.
-
-  local relVelVec to target:velocity:orbit - ship:velocity:orbit.
-  lock steering to relVelVec.
-  local maxSpeed is relVelVec:mag.
-  local prevSpeed is relVelVec:mag.
-  wait until steeringManager:ANGLEERROR < 1.
-  local th is 1.
-
-  printO("REND", "Relativ sebesseg eliminalasa:"+ maxSpeed).
-  until relVelVec:mag < velGoal or prevSpeed - relVelVec:mag < -1 {
-    wait 0.1.
-    set prevSpeed to relVelVec:mag.
-    set relVelVec to target:velocity:orbit - ship:velocity:orbit.
-    set th to relVelVec:mag / (ship:availableThrust/ship:mass).
-    lock throttle to th.
-  }
-
-  lock throttle to 0.
-  printO("REND", "Relativ sebesseg eliminalva. Hiba:" + relVelVec:mag).
-
-  return maxSpeed.
-}
-
-function decreaseDistance {
+local function decreaseDistance {
   parameter distanceGoal is 50.
   parameter maxSpeed is 300.
   parameter turningTime is 10.
@@ -102,7 +127,7 @@ function decreaseDistance {
   wait turningTime.
 }
 
-function shipCannotStop {
+local function shipCannotStop {
   parameter engineAcc.
   parameter turningTime.
 
@@ -115,7 +140,7 @@ function shipCannotStop {
   return stoppingDistance > target:distance.
 }
 
-function getThrottle {
+local function getThrottle {
   parameter maxBurningTime is 4.
   parameter d0 is 50.
   parameter v0 is 0.
@@ -124,27 +149,4 @@ function getThrottle {
   local enginesAcc is ship:availablethrust/ ship:mass.
 
   return maxAcc / enginesAcc.
-}
-
-function  approcheTarget {
-  parameter distanceGoal is 50.
-  parameter turningTime is 10.
-  parameter fast is true.
-  
-  waitTheClosestDistance().
-  until target:distance < distanceGoal {
-    local lastVel to killRelVel().
-    decreaseDistance(distanceGoal, lastVel,turningTime).
-    if target:distance > 2000 or not fast{
-      waitTheClosestDistance().
-    }
-  }
-  printO("REND", "Cel tavolsag elerve. Hiba" + abs(distanceGoal - target:distance)).
-}
-
-function finishRendezvous {
-  lock steering to target:direction.
-  wait 3.
-  unlock all.
-  sas on.
 }

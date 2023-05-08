@@ -1,6 +1,6 @@
 local rootDir is "zurugynokseg".
 
-function listToPath {
+local function listToPath {
   parameter pathList.
 
   return pathList:join("/") + ".ks".
@@ -60,7 +60,7 @@ function copyFiles {
 }
 
 
-function getFileSize {
+local function getFileSize {
   parameter f.
   parameter namespace.
   parameter vol.

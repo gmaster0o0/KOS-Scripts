@@ -1,3 +1,5 @@
+//TODO landing slope checking.
+
 parameter verbose is true.
 
 local vecDrawLex is lex().
@@ -15,42 +17,6 @@ function waitForStart {
   wait 5.
 }
 
-function createDisplay {
-  if verbose {
-    print "STATUS" at (40,0).
-    print "verticalspeed" at (40,1).
-    print "altRadar" at (40,2).
-    print "maxAccUp" at (40,3).
-    print "gravity" at (40,4).
-    print "ffSpeed" at (40,5).
-    print "impactTime" at (40,6).
-    print "burningTime" at (40,7).
-    print "breakingDistance" at (40,8).
-    print "throttle" at (40,9).
-    print "P_INP" at (40,10).
-    print "SurfaceSpeed" at (40,12).
-    print "Slope" at (40,13).
-  }
-}
-
-//calc stopping distance. Basic kinetic EQs
-function calculateStoppingDistance {
-  //t=v/a
-  // d = 1/2 *a* t^2
-  // d = (g/a)*h.
-  local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
-  print compensation at (60,17).
-  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
-  local stopDistanceX is groundVelVec:mag^2 / (2 * (ship:availablethrust/ship:mass)).
-  local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
-  print stopDistanceX at (60,14).
-  print stopDistanceY at (60,15).
-  local stopDistance is sqrt(stopDistanceX^2+stopDistanceY^2).
-    
-  fdata(stopDistance).
-
-  return stopDistance.
-}
 //performing suicid burn in 2 step.
 //1st is hard slow down until a hover alt
 //2nd state is just hover and slowly touch down
@@ -65,7 +31,7 @@ function suicideBurn {
   local th is 0.
   local st is srfRetrograde.
   lock throttle to th.
-  lock steering to st.
+  lock steering to srfRetrograde.
   rcs on.
   panels off.
   gear on.
@@ -78,9 +44,10 @@ function suicideBurn {
     local stopDist is calculateStoppingDistance().
     vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface,YELLOW,"BV").
     vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
+    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface:normalized*calcImpactTime(),GREEN,"D").
     vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)),RED,"VS").
     set th to breakingPID:UPDATE(time:seconds,groundDistance - stopDist).
-    set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
+    //set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
     set done to groundDistance < minALT.
   }
   breakingPID:reset().
@@ -95,6 +62,7 @@ function suicideBurn {
     set th to breakingPID:UPDATE(time:seconds,verticalSpeed).
     wait 0.
   }
+  set th to 0.
   print "LANDED      " at (60,0).
   wait 2.
   unlock all.
@@ -102,33 +70,6 @@ function suicideBurn {
   wait 5.
   panels on.
   rcs off.
-}
-
-//display fligth data
-function fdata { 
-  parameter stopDistance is "",
-  bt is "",
-  ffs is "".
-
-  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
-  //local surfVelVec is ship:velocity:surface.
-  if verbose {
-    print verticalSpeed at (60,1).
-    print ship:bounds:bottomaltradar at (60,2).
-    print maxAccUp(altitude) at (60,3).
-    print gravity(altitude) at (60,4).
-    print ffs at (60,5).
-    //print calcImpactTime() at (60,6).
-    print bt at (60,7).
-    print stopDistance at (60,8).
-    print throttle at (60,9).
-    print groundVelVec:mag at (60,12).
-    print groundSlope() at (60,13).
-    print vang(-up:vector, ship:velocity:surface) at (60,16).
-  }
-
-  //vecDrawAdd(vecDrawLex,ship:position,-up:vector*50,RED,"GVV").
-  //vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"velVec").
 }
 
 function killhorizontalspeed {
@@ -147,7 +88,75 @@ function killhorizontalspeed {
   }
 }
 
-function groundSlope {
+local function createDisplay {
+  if verbose {
+    print "STATUS" at (40,0).
+    print "verticalspeed" at (40,1).
+    print "altRadar" at (40,2).
+    print "maxAccUp" at (40,3).
+    print "gravity" at (40,4).
+    print "ffSpeed" at (40,5).
+    print "impactTime" at (40,6).
+    print "burningTime" at (40,7).
+    print "breakingDistance" at (40,8).
+    print "throttle" at (40,9).
+    print "P_INP" at (40,10).
+    print "SurfaceSpeed" at (40,12).
+    print "Slope" at (40,13).
+    print "stopDistanceX" at (40,14).
+    print "stopDistanceY" at (40,15).
+    print "angleOfAttack" at (40,16).
+    print "compensation" at (40,17).
+  }
+}
+
+//calc stopping distance. Basic kinetic EQs
+local function calculateStoppingDistance {
+  //t=v/a
+  // d = 1/2 *a* t^2
+  // d = (g/a)*h.
+  local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
+  print compensation at (60,17).
+  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
+  local stopDistanceX is groundVelVec:sqrmagnitude / (2 * (ship:availablethrust/ship:mass)).
+  local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
+  print stopDistanceX at (60,14).
+  print stopDistanceY at (60,15).
+  local stopDistance is sqrt(stopDistanceX^2+stopDistanceY^2).
+    
+  fdata(stopDistance).
+
+  return stopDistance.
+}
+
+//display fligth data
+local function fdata { 
+  parameter stopDistance is "",
+  bt is "",
+  ffs is "".
+
+  local groundVelVec is vxcl(up:vector, ship:velocity:surface).
+  //local surfVelVec is ship:velocity:surface.
+  if verbose {
+    print verticalSpeed at (60,1).
+    print ship:bounds:bottomaltradar at (60,2).
+    print maxAccUp(altitude) at (60,3).
+    print gravity(altitude) at (60,4).
+    print ffs at (60,5).
+    print calcImpactTime() at (60,6).
+    print bt at (60,7).
+    print stopDistance at (60,8).
+    print throttle at (60,9).
+    print groundVelVec:mag at (60,12).
+    print groundSlope() at (60,13).
+    print vang(-up:vector, ship:velocity:surface) at (60,16).
+  }
+
+  //vecDrawAdd(vecDrawLex,ship:position,-up:vector*50,RED,"GVV").
+  //vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"velVec").
+}
+
+local function groundSlope {
   local center is ship:position.
   if ADDONS:TR:HASIMPACT {
     set center to ADDONS:TR:IMPACTPOS:position.
@@ -169,7 +178,7 @@ function groundSlope {
   return vang(slopeNormVec, center - body:position).
 }
 
-function createTriangle {
+local function createTriangle {
   parameter height is 10.
   parameter center is ship:position.
 
@@ -181,3 +190,11 @@ function createTriangle {
   
   ).
 } 
+
+local function calcImpactTime {
+  parameter height is ship:bounds:bottomaltradar.
+  parameter v0 is vxcl(up:vector, ship:velocity:surface):mag.
+  local avgGrav is ((gravity(3000+body:radius) + gravity(altitude)/2)).
+  local d is sqrt(2*height/avgGrav)*v0.
+  return d.
+}

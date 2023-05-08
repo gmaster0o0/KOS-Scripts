@@ -1,32 +1,52 @@
+//TODO refactor this.
 
+function TransferLib {
+  parameter vecDebug is false.
+  parameter verbose is false.
+  
+  local vecDrawLex is lex().
+  
+  local function transferTo {
+  }
+
+  return lexicon(
+    "transferTo",transferTo@
+  ).
+}
+//LEGACY
 local verbose is false.
+local hohhmanLib is HohhmanLib().
 
 function waitForTransferWindow {
+  clearscreen.
   local tAngVel is 360/target:obt:period.
   local sAngVel is 360/ship:obt:period.
   local angleChangeRate is abs(tAngVel-sAngVel).
-  local dv to hohmannDv().
+  local dv to hohhmanLib:transferDeltaV().
   local bt to burnTimeForDv(dv).
-  local ht to hohmanmTime().
+  local ht to hohhmanLib:hohmanmTime().
 
-  local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
+  local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohhmanLib:hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
   printO("TRANSFER","ETA" + round(ETAofTransfer,1)).
-  addalarm("raw", time:seconds + max(30,ETAofTransfer - bt), "Transfer window", "Ready for transfer").
+  //addalarm("raw", time:seconds + max(30,ETAofTransfer - bt), "Transfer window", "Ready for transfer").
   add node(time:seconds + ETAofTransfer,0,0,dv).
   lock steering to prograde.
-  wait until steeringManager:ANGLEERROR < 1.
+  abs(steeringManager:ANGLEERROR < 1).
   until ETAofTransfer < bt/2 {
     wait 1.
     set tAngVel to 360/target:obt:period.
     set sAngVel to 360/ship:obt:period.
     local targetAng to getTargetAngle().
     set angleChangeRate to abs(tAngVel-sAngVel).
-    set ETAofTransfer to utilReduceTo360(getTargetAngle() - hohmanmTime()) / angleChangeRate.
-    print round(targetAng,1) at (80,1).
-    print round(ETAofTransfer,1) at (80,2).
-    print round(angleChangeRate,2) at (80,3).
+    set ETAofTransfer to utilReduceTo360(getTargetAngle() - hohhmanLib:hohmanmTime()) / angleChangeRate.
+    print "target angle=" at (40,5).
+    print "eta to transfer=" at (40,6).
+    print "Angle change rate=" at (40,7).
+    print round(targetAng,1) at (80,5).
+    print round(ETAofTransfer,1) at (80,6).
+    print round(angleChangeRate,2) at (80,7).
     cancelWarpBeforeEta(ETAofTransfer, bt).
   }
 }
@@ -106,36 +126,36 @@ function calcPhaseETA {
 
 function escapeTransfer {
   parameter PE_GOAL is 30000.
-
-  local transfer is calculateReturnTransfer(PE_GOAL).
+  
+  local _transfer is calculateReturnTransfer(PE_GOAL).
   lock steering to prograde.
-  wait until steeringManager:ANGLEERROR < 1.
-  local burnTime to burnTimeForDv(transfer["dv"]).
-  local PHASE_ETA is transfer["eta"].
+  wait until abs(steeringManager:ANGLEERROR < 1).
+  local burnTime to burnTimeForDv(_transfer["dv"]).
+  local PHASE_ETA is _transfer["eta"].
 
   addalarm("raw", time:seconds + max(30,PHASE_ETA - burnTime), "Return window", "Ready for transfer").
 
-  //local testnode to node(time:seconds + transfer["eta"], 0, 0, transfer["dv"]).
-  //add testnode.
+  local testnode to node(time:seconds + _transfer["eta"], 0, 0, _transfer["dv"]).
+  add testnode.
   until (PHASE_ETA < burnTime/2) {
     local ORBIT_ANGLE is calcSignAngle().
     print "OBT_ANGLE:  " + ORBIT_ANGLE + "     " at (5,33).
-    print "A_ANGLE:  " + transfer["ang"] + "     "at (5,34).
-    set PHASE_ETA to calcPhaseETA(transfer["ang"],ORBIT_ANGLE).
+    print "A_ANGLE:  " + _transfer["ang"] + "     "at (5,34).
+    set PHASE_ETA to calcPhaseETA(_transfer["ang"],ORBIT_ANGLE).
     print "PHASE_ETA:  " + Round(PHASE_ETA) + "     " at (5,36).
     wait 1.
     cancelWarpBeforeEta(PHASE_ETA, burnTime).
   }
 
-  wait until steeringManager:ANGLEERROR < 1.
+  wait until abs(steeringManager:ANGLEERROR < 1).
 
-  printO("TRANSFER","Pályamódosítás megkezdése[DV]:"+transfer["dv"]+"[BT]:"+burnTime).
+  printO("TRANSFER","Pályamódosítás megkezdése[DV]:"+_transfer["dv"]+"[BT]:"+burnTime).
   local th to 1.
   lock throttle to th.
   local DONE is false.
-  local goalVelocity is transfer["dv"]+ship:velocity:orbit:mag.
-  local DVLeft is transfer["dv"].
-  until DVLeft < -0.1*transfer["dv"] or DONE {
+  local goalVelocity is _transfer["dv"]+ship:velocity:orbit:mag.
+  local DVLeft is _transfer["dv"].
+  until DVLeft < -0.1*_transfer["dv"] or DONE {
     set DVLeft to goalVelocity-SHIP:VELOCITY:ORBIT:mag.
     set th to DVLeft / (ship:availableThrust/ship:mass).
     print "DVLeft: " + Round(DVLeft,2) + "                      "at (5,37).
@@ -151,7 +171,7 @@ function doOrbitTransfer {
   parameter PE_GOAL is max(body:atm:height * 1.2, body:radius*0.2).
 
   lock steering to prograde.
-  wait until steeringManager:ANGLEERROR < 1.
+  wait until abs(steeringManager:ANGLEERROR < 1).
   local th is 1.
   lock throttle to th.
   printO("TRANSFER","Pályamódosítás megkezdése").
@@ -159,7 +179,7 @@ function doOrbitTransfer {
   print "AP/TAP:" at (60,1).
   print "dv:" at (60,2).
   print "bt:" at (60,3).
-  local dv is hohmannDv().
+  local dv is hohhmanLib:transferDeltaV().
   local velStart is ship:velocity:orbit:mag.
   //avoid body change before arrive
   local targetBody is target.
@@ -188,7 +208,8 @@ function avoidCollision {
   parameter minPer is max(body:atm:height * 1.2, body:radius*0.2).
   if periapsis < minPer {
     lock steering to heading (90,0).
-    wait until steeringManager:ANGLEERROR < 1.
+    print steeringManager:ANGLEERROR.
+    wait until abs(steeringManager:ANGLEERROR < 1).
     lock throttle to 1.
     until periapsis > minPer {
       if periapsis / minPer > 0.9 {

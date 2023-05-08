@@ -26,7 +26,7 @@ function getSolarProcessor {
     }
   }
 }
-
+//Do booster stage and sending a undock command to the booster processor
 function doBoosterStaging {
   parameter proc.
 
@@ -37,7 +37,7 @@ function doBoosterStaging {
   }
   set proc to processor(proc:tag).
   if not proc:connection:sendmessage(message) {
-    printO("STAGING", "Nem sikerült elküldeni a parancsot").
+    printO("STAGING", "Command sending was unsuccessful").
   }
 }
 
@@ -54,17 +54,91 @@ function checkEngines {
   return empty.
 }
 
+function checkTanks {
+  local tanks to getStagedTanks().
+
+  if tanks:length = 0 {
+    return false.
+  }
+
+  local empty to true.
+  for t in tanks{
+    set empty to (empty and isTankEmpty(t)).
+  }
+  
+  return empty.
+}
+
+function isTankEmpty {
+  parameter t.
+  parameter fuelTypes is list("Oxidizer", "LiquidFuel").
+
+  for r in t:resources {
+    if(fuelTypes:contains(r:name)){
+      return r:amount < 0.01.
+    }
+  }.
+  return false.
+}
+
+function getStagedTanks {
+  local stagingTankFuels is list("LiquidFuel").
+  local fuelTanks to list().
+
+  for p in getStagedParts() {
+    for r in p:resources {
+      if stagingTankFuels:contains(r:name) {
+        if not fuelTanks:contains(p) {
+          fuelTanks:add(p).
+        }
+      }
+    }
+  }
+
+  return fuelTanks.
+}
+
 function getCurrentStageBoosters {
   local boosters to list().
+  local engineList is list().
   list engines in engineList.
   local currentStageNumber to getMaxStageNumber(engineList).
   
   for e in  engineList {
-    if e:decoupledin = currentStageNumber {
+    if e:decoupledin = currentStageNumber and e:ignition{
       boosters:add(e).
     }
   }
   return boosters.
+}
+
+function getCurrentStageTanks {
+
+}
+
+function getStagedPartsMass {
+  parameter stagenumber is stage:number.
+
+  local totalMass to 0.
+  for p in getStagedParts(stagenumber) {
+    set totalMass to totalMass + p:drymass.
+  }
+
+  return totalMass.
+}
+
+function getStagedParts {
+  parameter stagenumber is stage:number.
+
+  list parts in partsList.
+  local stagedParts to list().
+
+  for p in partsList {
+    if p:decoupledin = stagenumber - 1 or (p:decoupledin = -1 and stagenumber = p:stage){
+      stagedParts:add(p).
+    }
+  }
+  return stagedParts.
 }
 
 function getMaxStageNumber {
@@ -80,7 +154,7 @@ function getMaxStageNumber {
 }
 
 function checkBoosters {
-  if(checkEngines()){
+  if(checkEngines() or checkTanks()){
     local procs to getBoosterProcessors().
     for p in procs {
       doBoosterStaging(p).
@@ -93,6 +167,7 @@ function checkBoosters {
 }
 
 function activateEngines {
+  local engineList is list().
   list engines in engineList.
 
   for e in engineList {
@@ -107,12 +182,12 @@ function activateEngines {
       doSafeStage().
     }
   }
+  return engineList.
 }
-
 
 function doSafeStage {
   wait until stage:ready.
-  printO("STAGING","Fokozat szétválasztva").
+  printO("STAGING","Stage safely separated").
   stage.
 }
 

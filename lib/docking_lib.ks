@@ -1,45 +1,5 @@
-//return with free docking ports list for every size
-function getFreeDockingPorts {
-  parameter craft.
+local vecDrawLex is lex().
 
-  local ports is lex().
-  for d in craft:dockingPorts {
-    if d:state = "ready" {
-      if ports:keys:contains(d:nodeType) {
-        ports[d:nodeType]:add(d).
-      }else{
-        ports:add(d:nodeType,list(d)).
-      }
-    }
-  }
-  return ports.
-}
-
-function getTargetCraft {
-  if target:istype("dockingport"){
-    return target:ship.
-  }
-  return target.
-}
-
-//return with open docking ports which have same size
-function matchingDockingPorts {
-  local shipPorts is getFreeDockingPorts(ship).
-  local targetPorts is getFreeDockingPorts(getTargetCraft()).
-
-  local matchingPorts is lex().
-  for k in shipPorts:keys {
-    if targetPorts:keys:contains(k){
-      if matchingPorts:keys:contains(k){
-        matchingPorts[k]:add(targetPorts[k]).
-      }else{
-        matchingPorts:add(k,targetPorts[k]).
-      }
-    }
-  }
-
-  return matchingPorts.
-}
 //return with the selected dockingport
 function selectTargetPort {
 
@@ -54,138 +14,14 @@ function selectTargetPort {
     return.
   }
 }
-//default dockingport
-//selected with "control from here"
-//or from matching docking ports
-//first size first docking port is the default.
-function getDockingPort {
-  parameter size is "default".
-  if ship:controlPart:isType("dockingport"){
-    return ship:controlPart.
+
+function killRelVelPrec {
+  lock steering to target:position.
+  print "Eliminate rel vel" at (60,0).
+  UNTIL getRelVelVec():MAG < 0.01 {
+    moveOnVec(-1*getRelVelVec()).
   }
-  if size = "default" {
-    set size to matchingDockingPorts():keys[0].
-  }
-  return getFreeDockingPorts(ship)[size][0].
-}
-
-function compatiblePorts {
-  local dockingPortSize is getDockingPort():nodetype.
-  return  matchingDockingPorts()[dockingPortSize].
-}
-
-function chooseTargetPort {
-  local targetPorts is compatiblePorts().
-  if targetPorts:length = 1 {
-    return targetPorts[0].
-  }
-  clearscreen.
-  print "Choose docking port".
-  print "RCS=next".
-  print "abort=finish".
-  local selectedPort is targetPorts[0].
-  local counter is 0.
-  until abort {
-    if rcs {
-      set counter to mod(counter + 1, targetPorts:length).
-      set selectedPort to targetPorts[counter].
-      set target to selectedPort.
-      print "["+counter+"]"+selectedPort.
-      rcs off.
-    }
-  }
-  rcs off.
-  abort off.
-  return selectedPort.
-}
-
-local vecDrawLex is lex().
-
-function vectorToAxis {
-  parameter vec.
-  
-  local fore is VDOT(vec, ship:facing:forevector).
-  local top is VDOT(vec, ship:facing:topvector).
-  local star is VDOT(vec, ship:facing:starvector).
-
-  return lexicon(
-    "fore", fore,
-    "top",top,
-    "star", star
-  ).
-}
-
-function checkRelVel {
-  local relVelVec to getRelVelVec().
-  if relVelVec:mag > 0.01 {
-    killRelVelPrec().
-  }
-}
-
-function getRelVelVec {
-  local targetCraft is getTargetCraft().
-
-  local relVelVec is targetCraft:velocity:orbit - ship:velocity:orbit.
-  print round(relVelVec:mag,3) at (60,2).
-  return relVelVec.
-}
-
-function getDistanceVec {
-  parameter offset is 0.
-  parameter drawVec is true.
-
-  local dockingPort is getDockingPort().
-
-  local targetPort is target.
-
-  local offsetVec is targetPort:portfacing:foreVector * offset.
-  local distanceVec is targetPort:nodePosition - dockingPort:nodePosition + offsetVec.
-  if drawVec {
-    vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec, blue,"distanceVec").
-  }
-  print round(distanceVec:mag,1) at (60,1).
-  return  distanceVec.
-}
-
-function getEvadeVec {
-  parameter noGoZone is 100.
-  parameter drawVec is true.
-
-  local dockingPort is getDockingPort().
-  local evadeVec is getDistanceVec()- getDistanceVec(0,false):normalized * noGoZone.
-  if drawVec {
-    vecDrawAdd(vecDrawLex, dockingPort:position, evadeVec, blue,"evadeVec").
-  }
-  print evadeVec:mag at (60,3).
-
-  return evadeVec.
-}
-
-function moveOnVec {
-  parameter vec.
-
-  LOCAL PIDfore IS PIDLOOP(4,0.1,0.01,-1,1).
-  LOCAL PIDtop  IS PIDLOOP(4,0.1,0.01,-1,1).
-  LOCAL PIDstar IS PIDLOOP(4,0.1,0.01,-1,1).
-
-	SET PIDfore:SETPOINT TO vectorToAxis(vec)["fore"].
-	SET PIDtop:SETPOINT TO vectorToAxis(vec)["top"].
-	SET PIDstar:SETPOINT TO vectorToAxis(vec)["star"].
-
-  local desiredFore TO PIDfore:UPDATE(TIME:SECONDS,vectorToAxis(getRelVelVec())["fore"]).
-  local desiredTop TO PIDtop:UPDATE(TIME:SECONDS,vectorToAxis(getRelVelVec())["top"]) .
-  local desiredStar TO PIDstar:UPDATE(TIME:SECONDS,vectorToAxis(getRelVelVec())["star"]).
-      
-  print round(desiredFore,1) + "   " at(60,10).
-  print round(desiredTop,1) + "   " at(60,11).
-  print round(desiredStar,1) + "   " at(60,12).
-  print PIDfore:input at(60,13).
-  print PIDtop:input at(60,14).
-  print PIDstar:input at(60,15).
-  
-  set ship:control:fore to -desiredFore.
-  set ship:control:top to -desiredTop.
-  set ship:control:starboard to -desiredStar.
+  resetShipControl().
 }
 
 function approach {
@@ -201,15 +37,6 @@ function approach {
     local approachVec is calcVelVecFromDistance(getDistanceVec(offset),2).
     vecDrawAdd(vecDrawLex, dockingPort:position, approachVec, yellow,"approachVec").
     moveOnVec(-1*approachVec).
-  }
-  resetShipControl().
-}
-
-function killRelVelPrec {
-  lock steering to target:position.
-  print "Eliminate rel vel" at (60,0).
-  UNTIL getRelVelVec():MAG < 0.01 {
-    moveOnVec(-1*getRelVelVec()).
   }
   resetShipControl().
 }
@@ -255,34 +82,9 @@ function goAround{
     vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec+offsetVec, magenta,"diffVec").
     print (distanceVec+offsetVec):mag at (30,30).
     print (moveVec):mag at (30,31).
-    set done to (distanceVec+offsetVec):mag < moveVec:mag.
+    set done to (distanceVec+offsetVec):mag < 2 * moveVec:mag.
   }
   killRelVelPrec().
-}
-
-function calcPerVel {
-  parameter noGoZone is 100.
-  parameter speedLimit is 5.
-  local alpha is arcSin(speedLimit/noGoZone).
-  local periVel is speedLimit / cos(alpha).
-  return periVel.
-}
-
-function resetShipControl {
-  set ship:control:fore to 0.
-  set ship:control:top to 0.
-  set ship:control:starboard to 0.
-  clearVecDraws().
-}
-
-function calcVelVecFromDistance{
-  parameter distanceVec.
-  parameter speedLimit is 5.
-  //TODO Asume RCS thrust 1kN
-  parameter acceleration is 1/ship:mass.
-
-	local targetVel IS MIN(sqrt(2 * distanceVec:MAG / acceleration) * acceleration,speedLimit).
-	return distanceVec:NORMALIZED * targetVel.
 }
 
 function selectPortRotation{
@@ -311,4 +113,212 @@ function selectPortRotation{
   abort off.
 
   return steer.
+}
+
+//return with free docking ports list for every size
+local function getFreeDockingPorts {
+  parameter craft.
+
+  local ports is lex().
+  for d in craft:dockingPorts {
+    if d:state = "ready" {
+      if ports:keys:contains(d:nodeType) {
+        ports[d:nodeType]:add(d).
+      }else{
+        ports:add(d:nodeType,list(d)).
+      }
+    }
+  }
+  return ports.
+}
+
+//default dockingport
+//selected with "control from here"
+//or from matching docking ports
+//first size first docking port is the default.
+function getDockingPort {
+  parameter size is "default".
+  if ship:controlPart:isType("dockingport"){
+    return ship:controlPart.
+  }
+  if size = "default" {
+    set size to matchingDockingPorts():keys[0].
+  }
+  return getFreeDockingPorts(ship)[size][0].
+}
+
+function checkRelVel {
+  local relVelVec to getRelVelVec().
+  if relVelVec:mag > 0.01 {
+    killRelVelPrec().
+  }
+}
+
+local function getTargetCraft {
+  if target:istype("dockingport"){
+    return target:ship.
+  }
+  return target.
+}
+
+//return with open docking ports which have same size
+local function matchingDockingPorts {
+  local shipPorts is getFreeDockingPorts(ship).
+  local targetPorts is getFreeDockingPorts(getTargetCraft()).
+
+  local matchingPorts is lex().
+  for k in shipPorts:keys {
+    if targetPorts:keys:contains(k){
+      if matchingPorts:keys:contains(k){
+        matchingPorts[k]:add(targetPorts[k]).
+      }else{
+        matchingPorts:add(k,targetPorts[k]).
+      }
+    }
+  }
+
+  return matchingPorts.
+}
+
+local function compatiblePorts {
+  local dockingPortSize is getDockingPort():nodetype.
+  return  matchingDockingPorts()[dockingPortSize].
+}
+
+local function chooseTargetPort {
+  local targetPorts is compatiblePorts().
+  if targetPorts:length = 1 {
+    return targetPorts[0].
+  }
+  clearscreen.
+  print "Choose docking port".
+  print "RCS=next".
+  print "abort=finish".
+  local selectedPort is targetPorts[0].
+  local counter is 0.
+  until abort {
+    if rcs {
+      set counter to mod(counter + 1, targetPorts:length).
+      set selectedPort to targetPorts[counter].
+      set target to selectedPort.
+      print "["+counter+"]"+selectedPort.
+      rcs off.
+    }
+  }
+  rcs off.
+  abort off.
+  return selectedPort.
+}
+
+local function vectorToAxis {
+  parameter vec.
+  
+  local fore is VDOT(vec, ship:facing:forevector).
+  local top is VDOT(vec, ship:facing:topvector).
+  local star is VDOT(vec, ship:facing:starvector).
+
+  return lexicon(
+    "fore", fore,
+    "top",top,
+    "star", star
+  ).
+}
+
+local function getRelVelVec {
+  local targetCraft is getTargetCraft().
+
+  local relVelVec is targetCraft:velocity:orbit - ship:velocity:orbit.
+  print round(relVelVec:mag,3) at (60,2).
+  return relVelVec.
+}
+
+local function getDistanceVec {
+  parameter offset is 0.
+  parameter drawVec is true.
+
+  local dockingPort is getDockingPort().
+
+  local distanceVec is v(0,0,0).
+
+  if target:istype("dockingport"){
+    local targetPort is target.
+    local offsetVec is targetPort:portfacing:foreVector * offset.
+    set distanceVec to targetPort:nodePosition - dockingPort:nodePosition + offsetVec.
+  }else{
+    local offsetVec is (target:position - dockingPort:nodePosition):normalized * offset.
+    set distanceVec to target:position - dockingPort:nodePosition + offsetVec.
+  }
+
+  
+  if drawVec {
+    vecDrawAdd(vecDrawLex, dockingPort:position, distanceVec, blue,"distanceVec").
+  }
+  print round(distanceVec:mag,1) at (60,1).
+  return  distanceVec.
+}
+
+local function getEvadeVec {
+  parameter noGoZone is 100.
+  parameter drawVec is true.
+
+  local dockingPort is getDockingPort().
+  local evadeVec is getDistanceVec()- getDistanceVec(0,false):normalized * noGoZone.
+  if drawVec {
+    vecDrawAdd(vecDrawLex, dockingPort:position, evadeVec, blue,"evadeVec").
+  }
+  print evadeVec:mag at (60,3).
+
+  return evadeVec.
+}
+
+local function moveOnVec {
+  parameter vec.
+
+  local PIDfore IS PIDLOOP(4,0.1,0.01,-1,1).
+  local PIDtop  IS PIDLOOP(4,0.1,0.01,-1,1).
+  local PIDstar IS PIDLOOP(4,0.1,0.01,-1,1).
+
+	SET PIDfore:SETPOINT TO vectorToAxis(vec)["fore"].
+	SET PIDtop:SETPOINT TO vectorToAxis(vec)["top"].
+	SET PIDstar:SETPOINT TO vectorToAxis(vec)["star"].
+
+  local desiredFore TO PIDfore:UPDATE(TIME:SECONDS,vectorToAxis(getRelVelVec())["fore"]).
+  local desiredTop TO PIDtop:UPDATE(TIME:SECONDS,vectorToAxis(getRelVelVec())["top"]) .
+  local desiredStar TO PIDstar:UPDATE(TIME:SECONDS,vectorToAxis(getRelVelVec())["star"]).
+      
+  print round(desiredFore,1) + "   " at(60,10).
+  print round(desiredTop,1) + "   " at(60,11).
+  print round(desiredStar,1) + "   " at(60,12).
+  print PIDfore:input at(60,13).
+  print PIDtop:input at(60,14).
+  print PIDstar:input at(60,15).
+  
+  set ship:control:fore to -desiredFore.
+  set ship:control:top to -desiredTop.
+  set ship:control:starboard to -desiredStar.
+}
+
+local function calcPerVel {
+  parameter noGoZone is 100.
+  parameter speedLimit is 5.
+  local alpha is arcSin(speedLimit/noGoZone).
+  local periVel is speedLimit / cos(alpha).
+  return periVel.
+}
+
+local function resetShipControl {
+  set ship:control:fore to 0.
+  set ship:control:top to 0.
+  set ship:control:starboard to 0.
+  clearVecDraws().
+}
+
+local function calcVelVecFromDistance{
+  parameter distanceVec.
+  parameter speedLimit is 5.
+  //TODO Asume RCS thrust 1kN
+  parameter acceleration is 1/ship:mass.
+
+	local targetVel IS MIN(sqrt(2 * distanceVec:MAG / acceleration) * acceleration,speedLimit).
+	return distanceVec:NORMALIZED * targetVel.
 }

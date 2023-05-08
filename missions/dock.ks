@@ -23,12 +23,12 @@ print "PIDstar:inp:" at(40,15).
 print "Direction  :" at(40,16).
 print "PeriVel    :" at(40,17).
 
+checkRelVel().
+rcs ON.
+evadeTarget(nogodist).
+
 set target to selectTargetPort().
 local dockingPort is getDockingPort().
-
-RCS ON.
-checkRelVel().
-evadeTarget(nogodist).
 
 goAround(target, dockingPort,nogodist).
 approach(target, dockingPort,10).
@@ -36,6 +36,9 @@ killRelVelPrec().
 local steer is selectPortRotation(target).
 approach(target,dockingPort,0,steer).
 
-SET SHIP:CONTROL:NEUTRALIZE TO TRUE.
-WAIT 5.
-RCS OFF.
+//Finish docking.
+sas off.
+set ship:control:neutralize to true.
+wait 5.
+sas on.
+rcs OFF.

@@ -25,7 +25,7 @@ runOncePath("ZOS/fileIO").
 copyAllFilesToBoot().
 
 cd("ZOS").
-
+run dev.
 
 //FUNCTIONS
 function copyAllFilesToBoot {
@@ -49,7 +49,7 @@ function copyAllFilesToBoot {
     print "LIBARIES FILES:".
   }
   local libfiles is copyFiles(list(
-  "circ_lib",
+  "change_orbit_lib",
   "hohhman_lib",
   "landing_lib",
   "launch_lib",
