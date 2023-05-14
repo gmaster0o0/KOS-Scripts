@@ -1,4 +1,5 @@
 //TODO refactor this.
+runOncePath("../lib/rocket_utils_lib.ks").
 
 function TransferLib {
   parameter vecDebug is false.
@@ -23,7 +24,7 @@ function waitForTransferWindow {
   local sAngVel is 360/ship:obt:period.
   local angleChangeRate is abs(tAngVel-sAngVel).
   local dv to hohhmanLib:transferDeltaV().
-  local bt to burnTimeForDv(dv).
+  local bt to RocketUtils:burnTimeForDv(dv).
   local ht to hohhmanLib:hohmanmTime().
 
   local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohhmanLib:hohmanmTime()) / angleChangeRate.
@@ -130,7 +131,7 @@ function escapeTransfer {
   local _transfer is calculateReturnTransfer(PE_GOAL).
   lock steering to prograde.
   wait until abs(steeringManager:ANGLEERROR < 1).
-  local burnTime to burnTimeForDv(_transfer["dv"]).
+  local burnTime to RocketUtils:burnTimeForDv(_transfer["dv"]).
   local PHASE_ETA is _transfer["eta"].
 
   addalarm("raw", time:seconds + max(30,PHASE_ETA - burnTime), "Return window", "Ready for transfer").
@@ -185,7 +186,7 @@ function doOrbitTransfer {
   local targetBody is target.
   until apoapsis > targetBody:apoapsis or DONE {
     local dvleft to (velStart + dv) - ship:velocity:orbit:mag.
-    local bt is burnTimeForDv(dvleft).
+    local bt is RocketUtils:burnTimeForDv(dvleft).
 
     if obt:hasNextPatch {
       if obt:nextPatch = targetBody:obt {

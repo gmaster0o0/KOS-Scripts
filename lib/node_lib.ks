@@ -1,3 +1,5 @@
+runOncePath("../lib/rocket_utils_lib.ks").
+
 //NodeLib
 //@Description: Manipulate and execute nodes
 //TODO
@@ -39,7 +41,7 @@ global NodeLib is ({
     lock throttle to 0.
     sas off.
     local dv to _node:deltav:mag.
-    local burnTime to burnTimeForDv(dv).
+    local burnTime to RocketUtils:burnTimeForDv(dv).
     
     burnDisplay().
 
@@ -87,7 +89,7 @@ global NodeLib is ({
       checkBoosters().
       printp(round(dv0:mag,1), 13).
       printp(round(dv,2), 14). 
-      printp(formatTime(burnTimeForDv(dv)), 15).
+      printp(formatTime(RocketUtils:burnTimeForDv(dv)), 15).
       printp(round(th*100,2), 16).
       printp("-" ,17).
     }
