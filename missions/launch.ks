@@ -17,10 +17,10 @@ parameter unpack is true.
 
 if(missionStatus = 0) {
   clearScreen.
-  print "PRESS AG1 FOR LAUNCH!" at (30,10).
-  wait until ag1.
+  //print "PRESS AG1 FOR LAUNCH!" at (30,10).
+  //wait until ag1.
   clearScreen.
-  set ag1 to false.
+  //set ag1 to false.
   set missionStatus to 1.
 }
 
@@ -49,11 +49,11 @@ if(missionStatus = 2) {
   set missionStatus to 3.
 }
 if(missionStatus = 3) {
-  _circ:ellipseToCircle().
   waitUntilEndOfAtmosphere(unpack,targetApo*1000).
   set missionStatus to 4.
 }
 if(missionStatus = 4) {
+  _circ:ellipseToCircle().
   nodeLib:execute(nextNode, true).
   set missionStatus to 5.
 }

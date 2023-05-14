@@ -1,3 +1,5 @@
+runOncePath("../lib/rocket_utils_lib.ks").
+
 local startingDV is stage:deltaV.
 
 function launch {
@@ -23,12 +25,12 @@ function gravityTurn {
     print round(periapsis) at (80,2).
     print round(altitude) at (80,3).
     print round(ship:Q,5) at (80,4).
-    print round(TWR(),5) at (80,6).
+    print round(RocketUtils:TWR(),5) at (80,6).
     if ship:Q > maxQ {
       set maxQ to ship:Q.
     }else {
       if body:atm:height>0 {
-        lock throttle to 2.5 / max(2.5,TWR()).
+        lock throttle to 2.5 / max(2.5,RocketUtils:TWR()).
       }
     }
     print round(maxQ,5) at (80,5).

@@ -1,3 +1,6 @@
+runOncePath("../lib/rocket_utils_lib.ks").
+
+
 function ChangeOrbitLib {
   parameter vecDebug is false.
   parameter verbose is false.
@@ -24,7 +27,7 @@ function ChangeOrbitLib {
     local lead is max(0,eta:periapsis).
     local targetRadius is (positionAt(ship,lead + time:seconds)- body:position):mag.
     local velocityAtAP is sqrt(body:mu * (1/targetRadius)).
-    local maxBT is burnTimeForDv(ship:velocity:orbit:mag-velocityAtAP).
+    local maxBT is RocketUtils:burnTimeForDv(ship:velocity:orbit:mag-velocityAtAP).
     local utime is time:seconds + max(lead,maxBT/2 + 50).
     //local utime is time:seconds + lead.
     local positionAtBurn is positionAt(ship, utime) - body:position.
@@ -71,7 +74,7 @@ function ChangeOrbitLib {
     local lead is max(0,eta:periapsis).
     //minimal velocity for maximum elliptical orbit
     local minV is sqrt(body:mu * (2/(altitude+body:radius)-1/((altitude+body:radius*2+periapsis)/2))).
-    local maxBT is burnTimeForDv(ship:velocity:orbit:mag-minV).
+    local maxBT is RocketUtils:burnTimeForDv(ship:velocity:orbit:mag-minV).
     //add 50sec for align.
     local utime is time:seconds + max(lead,maxBT/2 + 50).
     //local utime is time:seconds + lead.
@@ -128,7 +131,7 @@ function ChangeOrbitLib {
       set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
       set burnVec to getBurnVector(ship,targetObj,ETAto).
       set dv to burnVec:mag.
-      set bt to burnTimeForDv(dv).
+      set bt to RocketUtils:burnTimeForDv(dv).
     
       print "Waiting for AN"  at (80,1).
       print round(ETAto,1) at (80,3). 

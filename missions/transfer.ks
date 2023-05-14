@@ -20,7 +20,6 @@ parameter missionStatus is 0.
 parameter autoWarp is false.
 
 local orbitLib is ChangeOrbitLib(false,false).
-local nodeLib is NodeLib(true).
 
 local targetBody is MUN.
 
@@ -28,6 +27,11 @@ if hasTarget {
   set targetBody  to target.
 }
 local targetPE is targetBody:atm:height + 10000.
+
+//sortcut to skip the launch.
+if status <> "LANDED" or status <> "PRELAUNCH" {
+  set missionStatus to 5.
+}
 
 //LAUNCH TO PARKING ORBIT.
 if missionStatus < 5 {
@@ -74,7 +78,7 @@ if(missionStatus = 9) {
 if(missionStatus = 10){
   //orbitLib:hyperbolicToElliptic().
   orbitLib:hyperbolicToCircular().
-  nodeLib:execute().
+  nodeLib:execute(nextNode, true).
 }
 
 

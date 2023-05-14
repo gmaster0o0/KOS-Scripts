@@ -11,10 +11,8 @@ runPath("../lib/change_orbit_lib.ks").
 runPath("../lib/hohhman_lib.ks").
 
 parameter targetInc is "".
-parameter autoWarp is false.
 
 local orbitLib is ChangeOrbitLib().
-local nodeLib is NodeLib(true).
 
 
 
@@ -37,4 +35,4 @@ if targetInc = "" {
 }else{
   orbitLib:changeInclination(targetInc).
 }
-nodeLib:execute().
+nodeLib:execute(nextNode, true).
