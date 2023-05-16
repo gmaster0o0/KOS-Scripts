@@ -14,4 +14,4 @@ runPath("../lib/vecDraw_lib.ks").
 clearScreen.
 clearVecDraws().
 
-nodeLib:execute(nextNode, true).
+nodeLib:execute(nextNode).

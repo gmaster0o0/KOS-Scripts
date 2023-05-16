@@ -362,3 +362,20 @@ function sign {
   
   return value/abs(value).
 }
+
+function calculateTrajectory {
+  parameter startTime.
+
+  local pointUT is 0.
+  local trajectoryData is list().
+  for timeDelta in range(1, 50, 1) {
+      wait 0. // it's the only way to ensure the following section is executed in the same tick
+      set pointUT to startTime + timeDelta. // no need to align pointUT since endTime is already aligned and the delta is an integer
+      local fixRot to getBodyRotation(pointUT).
+      local velAt is fixRot * velocityAt(ship, pointUT):surface.
+      local posAt is fixRot * (positionat(ship, pointUT) - body:position).
+      trajectoryData:add(list(pointUT, posAt, velAt)).
+  }
+
+  return trajectoryData.
+}
