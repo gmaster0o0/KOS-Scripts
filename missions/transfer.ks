@@ -78,7 +78,7 @@ if(missionStatus = 9) {
 if(missionStatus = 10){
   //orbitLib:hyperbolicToElliptic().
   orbitLib:hyperbolicToCircular().
-  nodeLib:execute(nextNode, true).
+  nodeLib:execute(nextNode).
 }
 
 

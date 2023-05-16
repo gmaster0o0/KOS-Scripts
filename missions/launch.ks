@@ -54,6 +54,6 @@ if(missionStatus = 3) {
 }
 if(missionStatus = 4) {
   _circ:ellipseToCircle().
-  nodeLib:execute(nextNode, true).
+  nodeLib:execute(nextNode).
   set missionStatus to 5.
 }

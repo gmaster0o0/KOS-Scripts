@@ -128,7 +128,7 @@ function ChangeOrbitLib {
       set ANTA to TAofANNode(ship,targetObj).
       set ETAto to ETAtoTA(ship:orbit,ANTA).
 
-      set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
+      local velAt to velocityAt(ship, ETAto + time:seconds):orbit.
       set burnVec to getBurnVector(ship,targetObj,ETAto).
       set dv to burnVec:mag.
       set bt to RocketUtils:burnTimeForDv(dv).
@@ -150,7 +150,7 @@ function ChangeOrbitLib {
         set ETAto to nodeETA:eta.
       }
 
-      set velAt to velocityAt(ship, ETAto + time:seconds):orbit.
+      local velAt to velocityAt(ship, ETAto + time:seconds):orbit.
       set dv to 2 * velAt:mag * sin (relInc/2).
       local nv is dv * cos(relInc/2) * nodeETA:direction.
       local pv is dv * -sin(relInc/2).  
