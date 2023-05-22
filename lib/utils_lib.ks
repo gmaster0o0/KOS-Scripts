@@ -57,8 +57,8 @@ function avgGrav {
 
   return (gravity(startAlt) + gravity(startAlt - dist))/2.
 }
-//get the rotation of the ship around the body in given timeframe
-function  getShipOrbitalRotationAroundBody {       
+//get the rotation of the orbit around the body in given timeframe
+function  getOrbitalRotation {       
   parameter UT is time:seconds + 10.
 
   local pos to (positionat(ship, UT) - body:position).
@@ -365,12 +365,14 @@ function sign {
 
 function calculateTrajectory {
   parameter startTime.
+  parameter maxSample is 50.
+  parameter dt is 1.
 
   local pointUT is 0.
   local trajectoryData is list().
-  for timeDelta in range(1, 50, 1) {
+  for i in range(1, maxSample, 1) {
       wait 0. // it's the only way to ensure the following section is executed in the same tick
-      set pointUT to startTime + timeDelta. // no need to align pointUT since endTime is already aligned and the delta is an integer
+      set pointUT to startTime + i * dt. // no need to align pointUT since endTime is already aligned and the delta is an integer
       local fixRot to getBodyRotation(pointUT).
       local velAt is fixRot * velocityAt(ship, pointUT):surface.
       local posAt is fixRot * (positionat(ship, pointUT) - body:position).

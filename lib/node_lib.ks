@@ -26,43 +26,45 @@ global NodeLib is ({
   local function nodeFromVector {
     parameter vecTarget,nodeTime,localBody IS ship:body.
 
-    local vecNodePrograde IS velocityAt(ship,nodeTime):orbit.
-    local vecNodeNormal IS vCrs(vecNodePrograde,positionAt(ship,nodeTime) - localBody:position).
-    local vecNodeRadial IS vCrs(vecNodeNormal,vecNodePrograde).
+    local vecNodePrograde IS (velocityAt(ship,nodeTime):orbit):normalized.
+    local vecNodeNormal IS (vCrs(vecNodePrograde,positionAt(ship,nodeTime) - localBody:position)):normalized.
+    local vecNodeRadial IS (vCrs(vecNodeNormal,vecNodePrograde)):normalized.
     
-    local nodePrograde IS vDot(vecTarget,vecNodePrograde:normalized).
-    local nodeNormal IS vDot(vecTarget,vecNodeNormal:normalized).
-    local nodeRadial IS vDot(vecTarget,vecNodeRadial:normalized).
+    local nodePrograde IS vDot(vecTarget,vecNodePrograde).
+    local nodeNormal IS vDot(vecTarget,vecNodeNormal).
+    local nodeRadial IS vDot(vecTarget,vecNodeRadial).
 
     return node(nodeTime,nodeRadial,nodeNormal,nodePrograde).
   }
   
   local function executeNode {
     parameter execNode is nextNode.
+    parameter warpMargin is 60.
     parameter fineTune is false.
+
     
     lock throttle to 0.
     sas off.
     //Adjust the burnvector to the rotation
     local burnvector to getBodyRotation(execNode:time) * execNode:deltav.
     local burnTime to RocketUtils:burnTimeForDv(burnvector:mag).
-    local burnStart to execNode:time - burnTime/2 - 0.02.
-    local nodeEta is execNode:eta.
+    local burnStart to execNode:time - burnTime/2.
     burnDisplay().
     wait 0.
     local oldData is newOrbitData().
-
+    rcs off.
     lock steering to lookdirup(getBodyRotation(execNode:time) * execNode:deltav, ship:facing:upvector).
     //now we need to wait until the burn vector and ship's facing are aligned
     printp("Ship aligning", 12).
-    wait until vang(ship:facing:vector, burnvector) < 0.25.
+    //wait until vang(ship:facing:vector, burnvector) < 0.25.
     printp("Wait for arriving", 12).
     //the ship is facing the right direction, let's wait for our burn time
-    printO("NODE","Burn Starts: " + time(nodeEta - burnTime/2,2):full).
+    printO("NODE","Burn Starts: " + time(execNode:time - burnTime/2):full + "    ").
     if autoWarp{
       printp("Warping", 12).
-      warpToNode(execNode,burnTime).
+      warpToNode(execNode, burnTime, warpMargin).
     }
+
     until abs(time:seconds - burnStart) < 0.01 {
       printp(round(burnvector:mag,3), 13).
       printp(round(execNode:deltav:mag,3), 14).
@@ -70,13 +72,14 @@ global NodeLib is ({
       printp(0, 16).
       printp(formatTime(execNode:eta - burnTime/2) ,17).
     }.
-
     local th to 0.
     lock throttle to th.
     local done is false.
     local errors is list(0.05,0.025).
+    set burnvector to execNode:burnvector.
     until done  {
-      printp("Burning", 12).
+      
+      printp("Burning        ", 12).
       set th to getThrottle(execNode:deltav:mag).
       if vdot(burnvector, execNode:deltav) < 0 {
         break.
@@ -93,16 +96,15 @@ global NodeLib is ({
       printp(round(th*100,2), 16).
       printp("-" ,17).
     }
-
     lock throttle to 0.
     unlock all.
     set ship:control:pilotmainthrottle to 0.
     if execNode:deltav:mag < 5 {
       if fineTune {
-        printp("Refining", 12).
+        printp("Refining       ", 12).
         fineTuneManuever().
       }
-      printp("Finished", 12).
+      printp("Finished         ", 12).
     }else {
       printp("Execution error", 12).
     }
@@ -131,15 +133,15 @@ global NodeLib is ({
   local function cancelVelocityError {
     parameter velocityError, stopCondition.
 
-    local pidVector is pidLip:pidVector(50,0.05,0.05,-1,1). 
+    local pidVector is pidLip:pidVector(60, 0.2, 0.2,-1,1). 
     pidVector:setpoint(v(0,0,0)).
     
     local shipControl is ship:control.
 
     until stopCondition() {
       local error is velocityError().
-      print "velocityError=" + error:mag at (0,15).
-      set shipControl:translation to (-ship:facing) * pidVector:update(time:seconds,-error).
+      printp(round(error:mag, 7), 18).
+      set shipControl:translation to (-ship:facing) * pidVector:update(time:seconds, -error).
       wait 0.
     }
 
@@ -165,72 +167,6 @@ global NodeLib is ({
       rcs off.
     }
   }
-  //Execute a given node with timewarp.
-  //@param {node} _node=nextNode executable node 
-  local function legacyExecuteNode {
-    parameter execNode is nextNode.
-    
-    lock throttle to 0.
-    sas off.
-    local burnTime to RocketUtils:burnTimeForDv(execNode:deltav:mag).
-
-    burnDisplay().
-
-    //steering to burn vector
-    lock steering to lookdirup(execNode:burnvector, ship:facing:upvector).
-
-    //now we need to wait until the burn vector and ship's facing are aligned
-    printp("Ship aligning", 12).
-    wait until vang(ship:facing:vector,execNode:burnvector) < 0.25.
-    printp("Wait for arriving", 12).
-    //the ship is facing the right direction, let's wait for our burn time
-    printO("NODE","Burn Starts: " + round(execNode:eta - burnTime/2,2)).
-
-    if autoWarp{
-      printp("Warping", 12).
-      warpToNode(execNode,burnTime).
-    }
-    until execNode:eta <= (burnTime/2) {
-      printp(round(execNode:deltav:mag,1), 13).
-      printp(round(execNode:deltav:mag,1), 14).
-      printp(formatTime(burnTime), 15).
-      printp(0, 16).
-      printp(formatTime(execNode:eta - burnTime/2) ,17).
-    }.
-
-    local th to 0.
-    lock throttle to th.
-    local dv0 to execNode:deltav.
-    local done to false.
-  
-    until done  {
-      printp("Burning", 12).
-
-      //set dv to execNode:deltav:mag.
-      set th to getThrottle(execNode:deltav:mag).
-      if vdot(dv0, execNode:deltav) < 0 {
-        break.
-      }
-
-      if execNode:deltav:mag < min(0.1, dv0:mag/100) {
-        wait until vdot(dv0, execNode:deltav) < 0.5.
-        set done to true.
-      }
-      checkBoosters().
-      printp(round(dv0:mag,1), 13).
-      printp(round(execNode:deltav:mag,2), 14). 
-      printp(formatTime(RocketUtils:burnTimeForDv(execNode:deltav:mag)), 15).
-      printp(round(th*100,2), 16).
-      printp("-" ,17).
-    }
-    lock throttle to 0.
-    unlock all.
-    set ship:control:pilotmainthrottle to 0.
-    local dv is execNode:deltav:mag.
-    remove nextnode.
-    printp("Finished", 12).
-    printO("NODE", "Node Execution Finished:" + round(dv,4) + "m/s left").
-  }
 
   local function getThrottle {
     parameter dv.
@@ -252,7 +188,8 @@ global NodeLib is ({
     print "|BURN TIME:                        |" at (60,15).
     print "|THROTTLE:                        %|" at (60,16).
     print "|ETA:                             s|" at (60,17).
-    print "====================================" at (60,18).
+    print "|VelError:                      m/s|" at (60,18).
+    print "====================================" at (60,19).
   }
 
   local function formatTime {
@@ -280,9 +217,8 @@ global NodeLib is ({
   }
 
   return lexicon(
-    "execute", legacyExecuteNode@,
     "setAutoWarp",setAutoWarp@,
-    "fromVector", nodeFromVector@,
+    "nodeFromVector", nodeFromVector@,
     "removeAll", removeNodes@,
     "executeNode",executeNode@,
     "cancelVelocityError", cancelVelocityError@

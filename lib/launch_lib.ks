@@ -1,3 +1,5 @@
+//TODO refactor
+//TODO lanch to specific inclinnation orbit.
 runOncePath("../lib/rocket_utils_lib.ks").
 
 local startingDV is stage:deltaV.
@@ -7,8 +9,10 @@ function launch {
   sas off.
   if status = "PRELAUNCH" or status = "LANDED" {
     countDown(countDownTime).
-    stage.
-    printO("LAUNCH","Kilövés").
+    if status = "PRELAUNCH" {
+      stage.
+    }
+    printO("LAUNCH","Ignitation").
   }
 }
 
@@ -19,7 +23,7 @@ function gravityTurn {
   lock steering to heading(90,pitchAng).
   lock throttle to 1.
   local maxQ is 0.
-  printO("LAUNCH", "Emelkedés "+targetApo + "m").
+  printO("LAUNCH", "Lift off "+targetApo + "m").
   until apoapsis > targetApo {
     print round(apoapsis) at (80,1).
     print round(periapsis) at (80,2).

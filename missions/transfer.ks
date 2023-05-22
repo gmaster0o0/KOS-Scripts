@@ -1,4 +1,5 @@
 //TODO: rewrite to goto lib with parameters
+//TODO: BUG: transfer have issue and starting the transfer burn after inclination burn.
 //final orbit: flyby,eliptic,circular
 
 runPath("../lib/ui_lib.ks").
@@ -28,17 +29,15 @@ if hasTarget {
 }
 local targetPE is targetBody:atm:height + 10000.
 
-//sortcut to skip the launch.
-if status <> "LANDED" or status <> "PRELAUNCH" {
-  set missionStatus to 5.
-}
-
 //LAUNCH TO PARKING ORBIT.
-if missionStatus < 5 {
+if status = "LANDED" or status = "PRELAUNCH" {
   run launch(missionStatus).
-
   set missionStatus to 5.
 }
+if status = "ORBITING" and targetBody <> body {
+  set missionStatus to 5.
+}
+
 clearScreen.
 
 print "========KERBINTOURS========" at(60,0).
@@ -78,7 +77,7 @@ if(missionStatus = 9) {
 if(missionStatus = 10){
   //orbitLib:hyperbolicToElliptic().
   orbitLib:hyperbolicToCircular().
-  nodeLib:execute(nextNode).
+  nodeLib:executeNode(nextNode).
 }
 
 

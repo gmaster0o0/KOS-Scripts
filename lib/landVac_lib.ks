@@ -1,7 +1,6 @@
 //TODO landing slope checking.
 
 parameter verbose is true.
-
 local vecDrawLex is lex().
 
 function waitForStart {
@@ -39,7 +38,7 @@ function suicideBurn {
   local done to false.
   until done {
     print "SUICID BURN" at (60,0).
-    print breakingPID:input at (60,10).
+    //print breakingPID:input at (60,10).
     local groundDistance is ship:bounds:bottomaltradar-minALT.
     local stopDist is calculateStoppingDistance().
     vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface,YELLOW,"BV").
@@ -58,7 +57,7 @@ function suicideBurn {
     vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
     vecDrawAdd(vecDrawLex,ship:position,(up:vector*20),RED,"VS").
     print "FINAL TOUCH     " at (60,0).
-    print breakingPID:input at (60,10).
+    //print breakingPID:input at (60,10).
     set th to breakingPID:UPDATE(time:seconds,verticalSpeed).
     wait 0.
   }
@@ -116,22 +115,19 @@ local function calculateStoppingDistance {
   // d = 1/2 *a* t^2
   // d = (g/a)*h.
   local compensation is abs(cos(vang(up:vector, ship:facing:vector))).
-  print compensation at (60,17).
   local groundVelVec is vxcl(up:vector, ship:velocity:surface).
   local stopDistanceX is groundVelVec:sqrmagnitude / (2 * (ship:availablethrust/ship:mass)).
   local stopDistanceY is verticalSpeed^2 / (2 * maxAccUp())*(1/compensation).
-  print stopDistanceX at (60,14).
-  print stopDistanceY at (60,15).
   local stopDistance is sqrt(stopDistanceX^2+stopDistanceY^2).
-    
-  fdata(stopDistance).
+  //print compensation at (60,17).
+  fdata(lex("X",stopDistanceX,"Y",stopDistanceY,"mag",stopDistance)).
 
   return stopDistance.
 }
 
 //display fligth data
 local function fdata { 
-  parameter stopDistance is "",
+  parameter  stopDistance is lex("X","","Y","","mag",""),
   bt is "",
   ffs is "".
 
@@ -145,10 +141,12 @@ local function fdata {
     print ffs at (60,5).
     print calcImpactTime() at (60,6).
     print bt at (60,7).
-    print stopDistance at (60,8).
+    print stopDistance:mag at (60,8).
     print throttle at (60,9).
     print groundVelVec:mag at (60,12).
     print groundSlope() at (60,13).
+    print stopDistance:X at (60,14).
+    print stopDistance:Y at (60,15).
     print vang(-up:vector, ship:velocity:surface) at (60,16).
   }
 
