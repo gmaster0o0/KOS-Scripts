@@ -149,7 +149,7 @@ function getDockingPort {
 
 function checkRelVel {
   local relVelVec to getRelVelVec().
-  if relVelVec:mag > 0.01 {
+  if round(relVelVec:mag,2) > 0.01 {
     killRelVelPrec().
   }
 }

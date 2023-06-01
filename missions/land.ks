@@ -2,8 +2,9 @@ runOncePath("../lib/landing2_lib.ks").
 runOncePath("../lib/landVac_lib.ks",false).
 runOncePath("../lib/vecDraw_lib.ks").
 
-parameter landingTarget is getSelectedWaypoint().
-parameter altitudeMargin is 50.
+//parameter landingTarget is getDefaultLanding().
+parameter landingTarget is "MunArch3Geo".
+parameter altitudeMargin is 5.
 
 local vecDrawLex is lexicon().
 clearScreen.
@@ -25,6 +26,7 @@ if landingPos:istype("boolean") and (not landingPos){
   if status = "ORBITING" {
     set calculatedPosition to landAt(landingPos).
   }
+  local finishedPos is ship:position - body:position.
   if status = "SUB_ORBITAL" {
     suicideburn().
   }
@@ -34,7 +36,7 @@ if landingPos:istype("boolean") and (not landingPos){
   local targetPos is ship:body:geopositionof(landingPos).
   print "current=" + current.
   print "landing=" + targetPos.
-  local distanceError is dist_between_coordinates(targetPos,current).
+  local distanceError is getSurfaceDistance(landingPos, ship:position-body:position).
   print "distanceError=" + distanceError.
 
   vecDrawAdd(vecDrawLex, ship:position, landingPos+body:position, blue,"targetPos").
@@ -42,19 +44,17 @@ if landingPos:istype("boolean") and (not landingPos){
   if calculatedPosition <> "" {
     vecDrawAdd(vecDrawLex, ship:position, calculatedPosition+body:position, red,"landingPos").
   }
+
+  vecDrawAdd(vecDrawLex, ship:position, finishedPos+body:position, green,"finishedPos").
+
+
 }
 
-FUNCTION dist_between_coordinates { //returns the dist between p1 and p2 on the localBody, assumes perfect sphere with radius of the body + what ever gets passed in to atAlt
-	PARAMETER p1,p2,atAlt IS 0.
-	LOCAL localBody IS p1:BODY.
-	LOCAL localBodyCirc IS CONSTANT:PI * (localBody:RADIUS + atAlt).//half the circumference of body
-	LOCAL bodyPos IS localBody:POSITION.
-	LOCAL bodyToP1Vec IS p1:POSITION - bodyPos.
-	LOCAL bodyToP2Vec IS p2:POSITION - bodyPos.
-	RETURN VANG(bodyToP1Vec,bodyToP2Vec) / 180 * localBodyCirc.
-}
+local function getDefaultLanding {
+  if hasTarget and target:istype("VESSEL") and target:status = "LANDED" {
+    return target.
+  }
 
-local function getSelectedWaypoint {
   for wp in allWaypoints() {
     if wp:isSelected(){
       return wp.
@@ -97,11 +97,6 @@ local function getLandingPosition {
 local function convertStingToType {
   parameter string.
 
-  if string = "target" {
-    if target:status = "landed" {
-      return target.
-    }
-  }
   local coords is string:split(",").
 
   if coords:length = 2 {

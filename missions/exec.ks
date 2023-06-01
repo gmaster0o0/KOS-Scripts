@@ -14,4 +14,7 @@ runPath("../lib/vecDraw_lib.ks").
 clearScreen.
 clearVecDraws().
 
-nodeLib:executeNode(nextNode).
+parameter fineTune is false.
+parameter turningTime is 60.
+
+nodeLib:executeNode(nextNode, turningTime, fineTune).

@@ -34,7 +34,7 @@ if status = "LANDED" or status = "PRELAUNCH" {
   run launch(missionStatus).
   set missionStatus to 5.
 }
-if status = "ORBITING" and targetBody <> body {
+if status = "ORBITING" and targetBody <> body and missionStatus <5 {
   set missionStatus to 5.
 }
 

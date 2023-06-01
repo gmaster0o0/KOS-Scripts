@@ -1,7 +1,10 @@
 //Precisious landing libary at vacuum.
 //Know issues:
 //TODO deorbit hill climb sometimes stuck
-//Some miss calculation, somewhere. Same amount of landing error 
+//Some miss calculation, somewhere. Same amount of landing error
+//LIMITATIONS: - parking orbit should be close to circular orbit.
+//             -Multi staging not tested, and probably wont work
+
 
 
 runPath("../lib/ui_lib.ks").
@@ -27,11 +30,25 @@ function landAt {
 
   //drawArrowTo(vecDrawLex,targetPosition,blue,"targetPos").
 
-  local deOrbitData is createDeOrbitNode2(landingPosition).
+  local deOrbitData is createDeOrbitNode(landingPosition).
   local landingSimResult is calculateLanding(landingPosition, deOrbitData).
-  local trajectoryData is calculateTrajectory(landingSimResult:deorbitData:endTime + 11).
-  NodeLib:executeNode(nextNode, 30, true).
-  refineOrbit(trajectoryData).
+  //local trajectoryData is calculateTrajectory(landingSimResult:deorbitData:endTime+1,120).
+  //print landingSimResult.
+  nodeLib:setAutoWarp(true).
+  local nodeExecutionResult is NodeLib:executeNode(nextNode, 30, false).
+  print "burnTimeError=" + (landingSimResult:deorbitData:endTime - time:seconds).
+  //DeorbitBurn Alt solution
+  // local throttleValue to landingSimResult:deorbitData:deorbitThrust / ship:availablethrust.
+  // sas off.
+  // lock steering to lookdirup(getBodyRotation(time:seconds, landingSimResult:deorbitData:startTime) * nextNode:burnVector, facing:topvector).
+  // print "Deorbit will start at " + time(landingSimResult:deorbitData:startTime):clock.
+  // wait until time:seconds > landingSimResult:deorbitData:startTime - 0.02.
+  // lock throttle to throttleValue.
+  // wait until time:seconds > landingSimResult:deorbitData:endTime.
+  // unlock throttle.
+  // unlock steering.
+  // remove nextNode.
+  refineOrbit(nodeExecutionResult:trajectoryData).
 
   set navMode to "SURFACE".
   sas on.
@@ -39,16 +56,20 @@ function landAt {
   set sasMode to "RETROGRADE".
   print "Landing will start at " + time(landingSimResult:landingData:burnStartTime):clock.
   warpto(landingSimResult:landingData:burnStartTime - 30).
-  wait until time:seconds > landingSimResult:landingData:burnStartTime - 0.2.
+  wait until abs(landingSimResult:landingData:burnStartTime - 0.02 - time:seconds) < 0.01.
   lock throttle to 1.
-  wait until time:seconds > landingSimResult:landingData:burnEndTime.
+  wait until abs(landingSimResult:landingData:burnEndTime - time:seconds) < 0.01.
   unlock throttle.
   sas off.
 
-  print "execution error=" + (positionAt(ship,time) - body:position - landingSimResult:landingData:landingPosition):mag.
+  print "position error=" + (positionAt(ship,time) - body:position - landingSimResult:landingData:landingPosition):mag.
+  print "velocity error=" + velocityAt(ship,time):surface:mag.
 
   return landingSimResult:landingData:landingPosition.
 }
+
+
+
 //TODO check why timeouting
 local function createDeOrbitNode2 {
   parameter targetPosition.
@@ -203,16 +224,19 @@ local function calculateLanding {
               "normalError", nodeError:normalError,
               "errorVector", errorVec:mag,
               "loopCount", loopCount,
+              "deorbitThrust", deorbitBurnData:deorbitThrust,
               "settingsIndex", settingsIndex)).
 
     if abs(nodeError:progradeError) > settings[0] or abs(nodeError:normalError) > (settings[0] / 2) {
-      local dx is progradeMinimazer:updateGetDelta(deorbitData:deorbitNode:prograde, nodeError:progradeError).
-      local dy is normalMinimazer:updateGetDelta(deorbitData:deorbitNode:normal, nodeError:normalError).
+      local dx is progradeMinimazer:getDelta(deorbitData:deorbitNode:prograde, nodeError:progradeError).
+      local dy is normalMinimazer:getDelta(deorbitData:deorbitNode:normal, nodeError:normalError).
       
       //drop values over limit.
       if abs(dx) < settings[4] and abs(dy) < settings[4] {
         set deorbitData:deorbitNode:prograde to deorbitData:deorbitNode:prograde + dx.
-        set deorbitData:deorbitNode:normal to deorbitData:deorbitNode:normal + dy. 
+        if abs(nodeError:progradeError) < 5000 {
+          set deorbitData:deorbitNode:normal to deorbitData:deorbitNode:normal + dy. 
+        }
       }
       
     } else {
@@ -224,6 +248,8 @@ local function calculateLanding {
       }
     }
   }
+
+  clearVecDraws().
 }
 
 local function calculateLandingBurn {
@@ -262,7 +288,7 @@ local function calculateLandingBurn {
       set altitudeError to getPositionError(simEndState[1]).
       
       if abs(altitudeError) > maxAltitudeError {
-          set simBurnStartDelay to timeLib:alignOffset(errorMinimizer:updateGetDelta(simBurnStartTime, altitudeError)).
+          set simBurnStartDelay to timeLib:alignOffset(errorMinimizer:getDelta(simBurnStartTime, altitudeError)).
           set simBurnStartTime to simBurnStartTime + simBurnStartDelay.
       }
       else {
@@ -321,7 +347,8 @@ local function simulateDeorbitBurn {
     "surfaceVelocity", burnEndState[2] - vcrs(body:angularVel, burnEndState[1]),
     "startTime", startTime,
     "endTime", endTime,
-    "burnTime", deorbitBurningTime
+    "burnTime", deorbitBurningTime,
+    "deorbitThrust",deorbitThrust
   ).
 }
 
@@ -403,24 +430,26 @@ local function progressUpdater {
         local landingSimInfo to simInfo:landingSimInfo.
         print "============Landing Simulation==========" at (60,20).
         print "|Sim done in " + landingSimInfo:steps + " steps with dt " + landingSimInfo:dt + "            " at (60,21).
-        print "|AltErr: " + round(landingSimInfo:altitudeError,2) + ", VelErr: " + round(landingSimInfo:velocityError,2)  + ", BSD:" +round(landingSimInfo:burnStartDelay,2)  + "    " at (60,22).
+        print "|AltErr: " + round(landingSimInfo:altitudeError, 2) + ", VelErr: " + round(landingSimInfo:velocityError,2) + "    " at (60,22).
+        print "|BurnDelay:" +round(landingSimInfo:burnStartDelay, 3) + "      " at (60,23).
     }
     else {
         print "=============Landing error===========" at (60,24).
         print "|ProgradeErr: " + round(simInfo:progradeError, 2) + ", NormalErr: " + round(simInfo:normalError, 2) + "        " at (60,25).
         print "|errorVector: " + round(simInfo:errorVector, 2) + "        " at (60,26).
-        print "|LoopCount: " + simInfo:loopCount + "  " + "SettingsIndex:" + simInfo:settingsIndex at (60,27).
+        print "|deorbitThrust:" + round(simInfo:deorbitThrust,2)+ "       " at (60,27).
+        print "|LoopCount: " + simInfo:loopCount + "  " + "SettingsIndex:" + simInfo:settingsIndex at (60,28).
     }
 }.
 
 local function newtonRapson {
-    parameter deltaFallbackFunc.
+    parameter initFunction.
 
     local initialized to false.
     local x0 to 0.
     local y0 to 0.
 
-    local function updateGetDelta {
+    local function getDelta {
         parameter x1, y1.
         
         local delta to 0.
@@ -430,18 +459,13 @@ local function newtonRapson {
         }
         else {
             set initialized to true.
-            set delta to deltaFallbackFunc(x1, y1).
+            set delta to initFunction(x1, y1).
         }
 
         set x0 to x1.
         set y0 to y1.
 
         return delta.
-    }
-
-    local function update {
-        parameter x1, y1.
-        return x1 + updateGetDelta(x1, y1).
     }
 
     local function reset {
@@ -451,8 +475,7 @@ local function newtonRapson {
     }
 
     return lex(
-        "updateGetDelta", updateGetDelta@,
-        "update", update@,
+        "getDelta", getDelta@,
         "reset", reset@
     ).
 }
@@ -477,8 +500,10 @@ local function refineOrbit {
     local velocityEstimation is interpolation:getValue(time:seconds).
     local positionEstimation is posInterpolation:getValue(time:seconds).
     set velocityError to velocityEstimation - velocityAt(ship, time):surface.
+    
     local positionError is positionEstimation - (positionAt(ship,time) - body:position).
     print "positionError=" + vang (positionError, velocityAt(ship, time):surface ) at (0,40).
+
     return velocityError.
   }.
 
