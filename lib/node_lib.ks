@@ -45,6 +45,7 @@ global NodeLib is ({
     parameter execNode is nextNode.
     parameter warpMargin is 60.
     parameter fineTune is false.
+    parameter calculateTrajectoryData is false.
 
     
     lock throttle to 0.
@@ -59,7 +60,7 @@ global NodeLib is ({
     if finetune {
       set delay to 10.
     }
-    local oldData is newOrbitData(nextNode, delay).
+    local oldData is newOrbitData(nextNode, burnStart + totalBurnTime + delay, calculateTrajectoryData).
     burnDisplay().
     lock steering to lookdirup(getBodyRotation(execNode:time) * execNode:deltav, ship:facing:upvector).
     //now we need to wait until the burn vector and ship's facing are aligned
@@ -79,7 +80,9 @@ global NodeLib is ({
       printp(formatTime(totalBurnTime), 15).
       printp(0, 16).
       printp(formatTime(burnStart - time:seconds) ,17).
+
     }.
+
     local startTime is time.
     local th to 0.
     lock throttle to th.
@@ -87,7 +90,6 @@ global NodeLib is ({
     local errors is list(0.05,0.025).
     set burnvector to execNode:burnvector.
     until done  {
-      
       printp("Burning        ", 12).
       set th to getThrottle(execNode:deltav:mag).
       if vdot(burnvector, execNode:deltav) < 0 {
@@ -128,7 +130,8 @@ global NodeLib is ({
 
   local function newOrbitData {
     parameter theNode is nextNode.
-    parameter delay is 10.
+    parameter startTime is nextNode:time + RocketUtils:burnTimeForDv(nextNode:burnvector:mag).
+    parameter calculateTrajectoryData is false.
 
     local orbitData is lexicon(
       "periapsis", theNode:orbit:periapsis,
@@ -136,9 +139,11 @@ global NodeLib is ({
       "eccentricity", theNode:orbit:eccentricity,
       "argumentofperiapsis",theNode:orbit:argumentofperiapsis,
       "longitudeofascendingnode", theNode:orbit:longitudeofascendingnode,
-      "inclination", theNode:orbit:inclination,
-      "trajectoryData", calculateTrajectory(theNode:time + RocketUtils:burnTimeForDv(theNode:deltav:mag) + delay)
+      "inclination", theNode:orbit:inclination
     ).
+    if calculateTrajectoryData {
+      orbitData:add("trajectoryData", calculateTrajectory(startTime + 2)).
+    }
 
     return orbitData.
   }
@@ -147,6 +152,7 @@ global NodeLib is ({
     parameter execNode is nextNode.
     parameter warpMargin is 60.
     parameter fineTune is false.
+    parameter calculateTrajectoryData is false.
 
     lock throttle to 0.
     sas off.
@@ -154,7 +160,7 @@ global NodeLib is ({
     if finetune {
       set delay to 10.
     }
-    local oldData is newOrbitData(nextNode, delay).
+    
     local burnvector to getBodyRotation(execNode:time) * execNode:deltav.
     //3s minimum burning time for more accurate result
     //local burnTime to max(3,RocketUtils:burnTimeForDv(burnvector:mag)).
@@ -164,6 +170,7 @@ global NodeLib is ({
     local burnThrust to RocketUtils:thrustFromBurnTime(burnVector:mag, RocketUtils:getAvarageISP(), totalburnTime, ship:mass).
     local errors is list(0.05,0.025).
     local throttleLevel to min(1,burnThrust / ship:availablethrust).
+    local oldData is newOrbitData(nextNode, burnEnd + delay, calculateTrajectoryData).
     lock steering to lookdirup(getBodyRotation(execNode:time) * execNode:deltav, ship:facing:upvector).
     burnDisplay().
     //now we need to wait until the burn vector and ship's facing are aligned
@@ -241,15 +248,14 @@ global NodeLib is ({
   local function cancelVelocityError {
     parameter velocityError, stopCondition.
 
-    local pidVector is pidLip:pidVector(1, 0.2, 0.2, -1, 1).
+    local pidVector is pidLib:pidVector(1, 0.2, 0.2, -1, 1).
 
     local avgAxisThrusts is RCSLib:getAvarageThrustVector().
     local availableAxisAccs to avgAxisThrusts / ship:mass.
-    local kiFactor is 1.
 
-    local kis to kiFactor * 0.01210737  * availableAxisAccs.
+    local kis to 0.06  * availableAxisAccs.
     pidVector:setKI(kis).
-    //print pidVector:getPidLoops().
+
     pidVector:setpoint(v(0,0,0)).
     rcsLib:setDeadband(0).
 
@@ -262,7 +268,7 @@ global NodeLib is ({
       wait 0.
     }
 
-    set shipControl:translation to v(0,0,0).
+    set shipControl:translation to v(0, 0, 0).
   }
 
   local function fineTuneManuever {
@@ -289,13 +295,15 @@ global NodeLib is ({
   local function getThrottle {
     parameter dv.
 
-    local maxAcc is ship:availablethrust/ship:mass.
+    //TODO need to figure out what is this number.
+
+    local shipAcc is ship:availablethrust/ship:mass.
 
     if ship:availableThrust = 0 {
       return 0.
     }
 
-    return min(3*dv/maxAcc,1).
+    return min( 3.7 * dv / shipAcc,1).
   }
 
   local function burnDisplay {

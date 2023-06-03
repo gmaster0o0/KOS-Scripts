@@ -25,30 +25,75 @@ runOncePath("../pof/deorbit.ks").
 
 local vecDrawLex is lexicon().
 
+function refineLandingPosition {
+  parameter landingPosition.
+  parameter landingStartTime is 5644836.
+
+  local landingProgressUpdater to {
+    parameter landingSimInfo.
+    progressUpdater(lex("landingSimInfo", landingSimInfo)).
+  }.
+  local deltaTimeList to list(1, 0.6, 0.1, 0.04).
+  local getPosVelAtTime to getPosVelAtTimeFromOrbit().
+  local getPositionError to {
+      parameter simPos.
+      return simPos:mag - landingPosition:mag.
+  }.
+
+  local function getPosVelAtTimeFromOrbit {
+    return {
+      parameter simTime.
+      local fixRot to getBodyRotation(simTime).
+      return list(fixRot * (positionat(ship, simTime) - body:position),
+                  fixRot * (velocityat(ship, simTime):surface)).
+    }.
+  }
+  local landingData is lex("landingError",v(1000,1000,1000)).
+
+  local calculateLandingData is {
+    set landingData to calculateLandingBurn(landingStartTime, ship:availablethrust, RocketUtils:getAvarageISP(), ship:mass, deltaTimeList, 1,
+                                              getPosVelAtTime, getPositionError, landingProgressUpdater).
+    landingData:add("landingError", landingData:landingPosition - landingPosition).
+
+    return landingData.
+  }.
+
+  local stopCondition is {
+    return (landingData:landingError:mag < 1) or (not rcs).
+  }.
+
+  cancelLandingError(calculateLandingData, stopCondition).
+
+  return landingData.
+}
+
 function landAt {
   parameter landingPosition.
-
   //drawArrowTo(vecDrawLex,targetPosition,blue,"targetPos").
-
   local deOrbitData is createDeOrbitNode(landingPosition).
   local landingSimResult is calculateLanding(landingPosition, deOrbitData).
   //local trajectoryData is calculateTrajectory(landingSimResult:deorbitData:endTime+1,120).
   //print landingSimResult.
   nodeLib:setAutoWarp(true).
-  local nodeExecutionResult is NodeLib:executeNode(nextNode, 30, false).
+  local nodeExecutionResult is NodeLib:executeNode(nextNode, 30, false, true).
   print "burnTimeError=" + (landingSimResult:deorbitData:endTime - time:seconds).
-  //DeorbitBurn Alt solution
-  // local throttleValue to landingSimResult:deorbitData:deorbitThrust / ship:availablethrust.
-  // sas off.
-  // lock steering to lookdirup(getBodyRotation(time:seconds, landingSimResult:deorbitData:startTime) * nextNode:burnVector, facing:topvector).
-  // print "Deorbit will start at " + time(landingSimResult:deorbitData:startTime):clock.
-  // wait until time:seconds > landingSimResult:deorbitData:startTime - 0.02.
-  // lock throttle to throttleValue.
-  // wait until time:seconds > landingSimResult:deorbitData:endTime.
-  // unlock throttle.
-  // unlock steering.
-  // remove nextNode.
-  refineOrbit(nodeExecutionResult:trajectoryData).
+  local orbitData is lexicon(
+    "periapsis", ship:orbit:periapsis,
+    "apoapsis", ship:orbit:apoapsis,
+    "eccentricity", ship:orbit:eccentricity,
+    "argumentofperiapsis",ship:orbit:argumentofperiapsis,
+    "longitudeofascendingnode", ship:orbit:longitudeofascendingnode,
+    "inclination", ship:orbit:inclination,
+    "trajectoryData", calculateTrajectory(landingSimResult:deorbitData:startTime + 10)
+  ).
+
+  // for key in orbitData:keys {
+  //   if key <> "trajectoryData" {
+  //     print key + ": " + (nodeExecutionResult[key] - orbitData[key]).
+  //   }
+  // }
+  //refineOrbit(nodeExecutionResult:trajectoryData).
+  set landingSimResult:landingData to refineLandingPosition(landingPosition, landingSimResult:landingData:burnStartTime).
 
   set navMode to "SURFACE".
   sas on.
@@ -62,13 +107,12 @@ function landAt {
   unlock throttle.
   sas off.
 
-  print "position error=" + (positionAt(ship,time) - body:position - landingSimResult:landingData:landingPosition):mag.
-  print "velocity error=" + velocityAt(ship,time):surface:mag.
+  //print "position error=" + (positionAt(ship,time) - body:position - landingSimResult:landingData:landingPosition):mag.
+  //print "velocity error=" + velocityAt(ship,time):surface:mag.
+  //writeJson(landingSimResult, "landingdata.json").
 
   return landingSimResult:landingData:landingPosition.
 }
-
-
 
 //TODO check why timeouting
 local function createDeOrbitNode2 {
@@ -230,7 +274,10 @@ local function calculateLanding {
     if abs(nodeError:progradeError) > settings[0] or abs(nodeError:normalError) > (settings[0] / 2) {
       local dx is progradeMinimazer:getDelta(deorbitData:deorbitNode:prograde, nodeError:progradeError).
       local dy is normalMinimazer:getDelta(deorbitData:deorbitNode:normal, nodeError:normalError).
-      
+      // if (abs(nodeError:progradeError) > 100 * settings[0] or  abs(nodeError:normalError) > settings[0] * 100) and settingsIndex > 0 {
+      //   set settingsIndex to settingsIndex - 1.
+      //   set settings to settingsList[settingsIndex].
+      // }
       //drop values over limit.
       if abs(dx) < settings[4] and abs(dy) < settings[4] {
         set deorbitData:deorbitNode:prograde to deorbitData:deorbitNode:prograde + dx.
@@ -330,7 +377,7 @@ local function simulateDeorbitBurn {
   local burnVector is deorbitData:deorbitNode:burnVector.
   local deorbitBurningTime is RocketUtils:burnTimeForDv(burnVector:mag).
   local startTime is timeLib:alignTimestamp(deorbitData:deorbitNode:time - (deorbitBurningTime /2)).
-  local endTime is startTime + timeLib:alignOffset(deorbitBurningTime).
+  local endTime is startTime + timeLib:alignOffset(deorbitBurningTime)+1.
   local startPos is getBodyRotation(startTime) * positionAt(ship, startTime) -  body:position.
   local startVel is getBodyRotation(startTime) * velocityAt(ship, startTime):orbit.
   local deorbitThrust to RocketUtils:thrustFromBurnTime(burnVector:mag, engineIsp, deorbitBurningTime, ship:mass).
@@ -428,7 +475,7 @@ local function progressUpdater {
 
     if simInfo:haskey("landingSimInfo") {
         local landingSimInfo to simInfo:landingSimInfo.
-        print "============Landing Simulation==========" at (60,20).
+        print "============Landing Simulation========" at (60,20).
         print "|Sim done in " + landingSimInfo:steps + " steps with dt " + landingSimInfo:dt + "            " at (60,21).
         print "|AltErr: " + round(landingSimInfo:altitudeError, 2) + ", VelErr: " + round(landingSimInfo:velocityError,2) + "    " at (60,22).
         print "|BurnDelay:" +round(landingSimInfo:burnStartDelay, 3) + "      " at (60,23).
@@ -438,7 +485,7 @@ local function progressUpdater {
         print "|ProgradeErr: " + round(simInfo:progradeError, 2) + ", NormalErr: " + round(simInfo:normalError, 2) + "        " at (60,25).
         print "|errorVector: " + round(simInfo:errorVector, 2) + "        " at (60,26).
         print "|deorbitThrust:" + round(simInfo:deorbitThrust,2)+ "       " at (60,27).
-        print "|LoopCount: " + simInfo:loopCount + "  " + "SettingsIndex:" + simInfo:settingsIndex at (60,28).
+        print "|LoopCount: " + simInfo:loopCount + "  " + "PrecisionIndex:" + simInfo:settingsIndex at (60,28).
     }
 }.
 
@@ -500,9 +547,14 @@ local function refineOrbit {
     local velocityEstimation is interpolation:getValue(time:seconds).
     local positionEstimation is posInterpolation:getValue(time:seconds).
     set velocityError to velocityEstimation - velocityAt(ship, time):surface.
-    
+
     local positionError is positionEstimation - (positionAt(ship,time) - body:position).
-    print "positionError=" + vang (positionError, velocityAt(ship, time):surface ) at (0,40).
+    
+    print "|velocityError=" + velocityError:mag  at (60,30).
+    print "|positionError=" + positionError:mag at (60,31).
+
+    //vecDrawAdd(vecDrawLex,ship:position, 10000*velocityError,cyan,"velE").
+    //vecDrawAdd(vecDrawLex,ship:position, positionError,purple,"posE").
 
     return velocityError.
   }.
@@ -510,9 +562,42 @@ local function refineOrbit {
   local stopCondition is {
     return (velocityError:mag < 0.0001) or interpolation:isNotFoundError() or (not rcs).
   }.
+         
+  print "==========Trajectory correction======" at (60,29).
+  print "                                     " at (60,30).
+  print "                                     " at (60,31).
   wait until abs(velocityDataList[0][0] - time:seconds) < 0.01.
   sas on.
   rcs on.
   NodeLib:cancelVelocityError(getVelocityError@, stopCondition@).
   rcs off.
+}
+
+local function cancelLandingError {
+  parameter landingError, stopCondition.
+
+  local pidVector is pidLib:pidVector(0.001, 0.002, 0.0002, -1, 1).
+
+  pidVector:setpoint(v(0,0,0)).
+
+  local shipControl is ship:control.
+  sas on.
+  rcs on.
+
+  print "===========Landing correction========" at (60,29).
+  print "                                     " at (60,30).
+  print "                                     " at (60,31).
+
+  until stopCondition() {
+    //set shipControl:translation to v(0, 0, 0).
+    local error is landingError():landingError.
+    print "|landingError= " + error:mag at (60,30).
+    set shipControl:translation to (-ship:facing) * pidVector:update(time:seconds, error).
+    local burnDuration is min(error:mag/300, 1).
+    print "|burnDuration= " + burnDuration at (60,31).
+    //wait burnDuration.
+    vecDrawAdd(vecDrawLex,ship:position, error ,purple,"landingError").
+  }
+
+  set shipControl:translation to v(0, 0, 0).
 }

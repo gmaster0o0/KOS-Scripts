@@ -4,7 +4,7 @@ runOncePath("../lib/vecDraw_lib.ks").
 
 //parameter landingTarget is getDefaultLanding().
 parameter landingTarget is "MunArch3Geo".
-parameter altitudeMargin is 5.
+parameter altitudeMargin is 20.
 
 local vecDrawLex is lexicon().
 clearScreen.
@@ -31,11 +31,10 @@ if landingPos:istype("boolean") and (not landingPos){
     suicideburn().
   }
 
-  clearVecDraws().
-  local current is ship:body:geopositionof(ship:position).
-  local targetPos is ship:body:geopositionof(landingPos).
-  print "current=" + current.
-  print "landing=" + targetPos.
+  //local current is ship:body:geopositionof(ship:position).
+  //local targetPos is ship:body:geopositionof(landingPos).
+  //print "current=" + current.
+  //print "landing=" + targetPos.
   local distanceError is getSurfaceDistance(landingPos, ship:position-body:position).
   print "distanceError=" + distanceError.
 
@@ -46,8 +45,6 @@ if landingPos:istype("boolean") and (not landingPos){
   }
 
   vecDrawAdd(vecDrawLex, ship:position, finishedPos+body:position, green,"finishedPos").
-
-
 }
 
 local function getDefaultLanding {

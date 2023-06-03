@@ -41,10 +41,12 @@ function suicideBurn {
     //print breakingPID:input at (60,10).
     local groundDistance is ship:bounds:bottomaltradar-minALT.
     local stopDist is calculateStoppingDistance().
-    vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface,YELLOW,"BV").
-    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
-    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface:normalized*calcImpactTime(),GREEN,"D").
-    vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)),RED,"VS").
+    if verbose {
+      vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface,YELLOW,"BV").
+      vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
+      vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface:normalized*calcImpactTime(),GREEN,"D").
+      vecDrawAdd(vecDrawLex,ship:position,(verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)),RED,"VS").
+    }
     set th to breakingPID:UPDATE(time:seconds,groundDistance - stopDist).
     //set st to (verticalSpeed * up:vector/max(1,abs(verticalSpeed)/groundspeed)) - ship:velocity:surface.
     set done to groundDistance < minALT.
@@ -53,9 +55,11 @@ function suicideBurn {
   set breakingPID:setpoint to hoverSpeed.
   lock steering to (up:vector*alt:radar) - ship:velocity:surface.
   until status = "LANDED"{
-    vecDrawAdd(vecDrawLex,ship:position,(up:vector*20) - ship:velocity:surface,YELLOW,"BV").
-    vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
-    vecDrawAdd(vecDrawLex,ship:position,(up:vector*20),RED,"VS").
+    if verbose {
+      vecDrawAdd(vecDrawLex,ship:position,(up:vector*20) - ship:velocity:surface,YELLOW,"BV").
+      vecDrawAdd(vecDrawLex,ship:position,ship:velocity:surface,BLUE,"SV").
+      vecDrawAdd(vecDrawLex,ship:position,(up:vector*20),RED,"VS").
+    }
     print "FINAL TOUCH     " at (60,0).
     //print breakingPID:input at (60,10).
     set th to breakingPID:UPDATE(time:seconds,verticalSpeed).

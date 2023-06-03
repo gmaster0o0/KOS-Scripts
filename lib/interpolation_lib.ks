@@ -37,6 +37,9 @@ global InterpolationLib to ({
     ).
   }
 
+  // local function cubicSplineInterpolation {
+
+  // }
   return lexicon(
     "linearInterpolation", linearInterpolation@
   ).
