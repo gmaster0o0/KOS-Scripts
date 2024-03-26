@@ -48,18 +48,19 @@ function refineLandingPosition {
                   fixRot * (velocityat(ship, simTime):surface)).
     }.
   }
-  local landingData is lex("landingError",v(1000,1000,1000)).
+
+  local landingData is lex("landingError",v(1000,1000,1000),"burnStartTime",landingStartTime).
 
   local calculateLandingData is {
     set landingData to calculateLandingBurn(landingStartTime, ship:availablethrust, RocketUtils:getAvarageISP(), ship:mass, deltaTimeList, 1,
                                               getPosVelAtTime, getPositionError, landingProgressUpdater).
     landingData:add("landingError", landingData:landingPosition - landingPosition).
-
+    print vang(landingPosition, landingData:landingPosition). 
     return landingData.
   }.
 
   local stopCondition is {
-    return (landingData:landingError:mag < 1) or (not rcs).
+    return (landingData:landingError:mag < 1) or (not rcs) or abs(landingData:burnStartTime - time:seconds) < 0.1.
   }.
 
   cancelLandingError(calculateLandingData, stopCondition).
@@ -72,7 +73,6 @@ function landAt {
   //drawArrowTo(vecDrawLex,targetPosition,blue,"targetPos").
   local deOrbitData is createDeOrbitNode(landingPosition).
   local landingSimResult is calculateLanding(landingPosition, deOrbitData).
-  //local trajectoryData is calculateTrajectory(landingSimResult:deorbitData:endTime+1,120).
   //print landingSimResult.
   nodeLib:setAutoWarp(true).
   local nodeExecutionResult is NodeLib:executeNode(nextNode, 30, false, true).
@@ -87,13 +87,13 @@ function landAt {
     "trajectoryData", calculateTrajectory(landingSimResult:deorbitData:startTime + 10)
   ).
 
-  // for key in orbitData:keys {
-  //   if key <> "trajectoryData" {
-  //     print key + ": " + (nodeExecutionResult[key] - orbitData[key]).
-  //   }
-  // }
-  //refineOrbit(nodeExecutionResult:trajectoryData).
-  set landingSimResult:landingData to refineLandingPosition(landingPosition, landingSimResult:landingData:burnStartTime).
+  for key in orbitData:keys {
+    if key <> "trajectoryData" {
+      print key + ": " + (nodeExecutionResult[key] - orbitData[key]).
+    }
+  }
+  refineOrbit(nodeExecutionResult:trajectoryData).
+  //set landingSimResult:landingData to refineLandingPosition(landingPosition, landingSimResult:landingData:burnStartTime).
 
   set navMode to "SURFACE".
   sas on.
@@ -553,8 +553,8 @@ local function refineOrbit {
     print "|velocityError=" + velocityError:mag  at (60,30).
     print "|positionError=" + positionError:mag at (60,31).
 
-    //vecDrawAdd(vecDrawLex,ship:position, 10000*velocityError,cyan,"velE").
-    //vecDrawAdd(vecDrawLex,ship:position, positionError,purple,"posE").
+    vecDrawAdd(vecDrawLex,ship:position, 10000*velocityError,cyan,"velE").
+    vecDrawAdd(vecDrawLex,ship:position, positionError,purple,"posE").
 
     return velocityError.
   }.
@@ -576,7 +576,7 @@ local function refineOrbit {
 local function cancelLandingError {
   parameter landingError, stopCondition.
 
-  local pidVector is pidLib:pidVector(0.001, 0.002, 0.0002, -1, 1).
+  local pidVector is pidLib:pidVector(0.01, 0.001, 0.0001, -0.6, 0.6).
 
   pidVector:setpoint(v(0,0,0)).
 
@@ -587,15 +587,27 @@ local function cancelLandingError {
   print "===========Landing correction========" at (60,29).
   print "                                     " at (60,30).
   print "                                     " at (60,31).
+  
+  local burnDuration is 0.6.
+  local timer is time:seconds+burnDuration.
+  local error is v(1000,1000,1000).
 
   until stopCondition() {
-    //set shipControl:translation to v(0, 0, 0).
-    local error is landingError():landingError.
+    if abs(timer - time:seconds) < 0.001 or error:x = 1000 {
+      set shipControl:translation to v(0, 0, 0).
+      set error to landingError():landingError.
+      //RCSLib:
+      set timer to time:seconds+burnDuration.
+    }
+    if error:mag < 5 {
+      set burnDuration to 0.1.
+    }
     print "|landingError= " + error:mag at (60,30).
     set shipControl:translation to (-ship:facing) * pidVector:update(time:seconds, error).
-    local burnDuration is min(error:mag/300, 1).
     print "|burnDuration= " + burnDuration at (60,31).
-    //wait burnDuration.
+    print pidVector:getPidLoops():x:output at (60,32).
+    print pidVector:getPidLoops():y:output at (60,33).
+    print pidVector:getPidLoops():z:output at (60,34).
     vecDrawAdd(vecDrawLex,ship:position, error ,purple,"landingError").
   }
 

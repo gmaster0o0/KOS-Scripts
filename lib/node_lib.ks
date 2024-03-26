@@ -295,14 +295,12 @@ global NodeLib is ({
   local function getThrottle {
     parameter dv.
 
-    //TODO need to figure out what is this number.
-
     local shipAcc is ship:availablethrust/ship:mass.
 
     if ship:availableThrust = 0 {
       return 0.
     }
-
+    //TODO need to figure out what is this number.
     return min( 3.7 * dv / shipAcc,1).
   }
 
@@ -315,7 +313,6 @@ global NodeLib is ({
     print "|THROTTLE:                        %|" at (60,16).
     print "|ETA:                             s|" at (60,17).
     print "|VelError:                      m/s|" at (60,18).
-    print "====================================" at (60,19).
   }
 
   local function formatTime {
