@@ -121,7 +121,11 @@ function ChangeOrbitLib {
 
   local function changeInclination {
     parameter targetInc is "".
-
+    
+    local relInc to 0.
+    local dv is 0.
+    local bt to 0.
+    
     if hasTarget or targetInc = "" {
       set targetObj to target.
       set  relInc to getRelInc().
@@ -139,7 +143,7 @@ function ChangeOrbitLib {
       print round(bt,1) at(80,5).
       print round(relInc,2) at (80,7).
 
-      add nodeLib:FromVector(burnVec,ETAto + time:seconds + bt/2).
+      add nodeLib:nodeFromVector(burnVec,ETAto + time:seconds + bt/2).
     }else{
       set relInc to getRelInc(targetInc).
       local nodeETA to getClosestNodeETA().

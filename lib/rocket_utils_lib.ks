@@ -12,6 +12,7 @@ global RocketUtils to ({
     until  stagedDeltaV < ship:stagedeltav(stagenumber):current  or ship:stagedeltav(stagenumber):current = 0 {
       set stagedDeltaV to stagedDeltaV - ship:stagedeltav(stagenumber):current.
       set totalBurningTime to totalBurningTime + ship:stagedeltav(stagenumber):duration.
+
       local stageIsp is getAvarageISP(stagenumber).
       set stagedMass to getFinalMass(ship:stagedeltav(stagenumber):current,stageIsp,stagedMass) - getStagedPartsMass(stagenumber).
       set stagenumber to stagenumber - 1.
@@ -125,7 +126,8 @@ global RocketUtils to ({
 
   //filter the active engines in the given engine list
   local function listActiveEngines {
-    local engineList is listEngines().
+    parameter engineList is listEngines().
+
     local activeEngines is list().
     for e in engineList {
       if e:ignition and not e:flameout {
@@ -136,16 +138,32 @@ global RocketUtils to ({
   }
 
   //Filter engines in the given stage from the give engine list
+  //TODO buggy function sometimes return with empty list. NEED TO FIX IT.
   local function getStagedEngines {
     parameter stagenumber is stage:number.
 
     local stagedEngines is list().
 
     for e in listEngines() {
-      if e:decoupledin = stagenumber - 1 or (e:decoupledin = -1 and stagenumber = e:stage){
-        stagedEngines:add(e).
+          //print e:name.
+          //print "stage="+e:stage.
+          //print "stagenumber="+stagenumber.
+          //print "decoupledin="+e:decoupledin.
+          //print "-----".
+      if e:stage >= stagenumber {
+        if (e:decoupledin < stagenumber and e:decoupledin < e:stage) or (e:decoupledin = -1 and stagenumber = e:stage){
+          //already in active stage
+          if e:stage >= stage:number and e:ignition and not e:flameout {
+            stagedEngines:add(e).
+          }
+          //future stage
+          if e:stage < stage:number and not e:ignition {
+            stagedEngines:add(e).
+          }
+        }
       }
     }
+
     return stagedEngines.
   }
 
@@ -172,6 +190,7 @@ global RocketUtils to ({
     "getAvarageISP",getAvarageISP@,
     "thrustFromBurnTime",thrustFromBurnTime@,
     "listActiveEngines",listActiveEngines@,
+    "getStagedEngines",getStagedEngines@,
     "TWR",TWR@,
     "maxTWR",maxTWR@
   ).

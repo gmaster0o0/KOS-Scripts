@@ -1,5 +1,8 @@
+//TODO Need refactor and create more efficient method
+//TODO not working when the target on retrograde orbit
 local hohhmanLib is HohhmanLib().
 
+//TODO REFACTOR FOR MUCH EFFECIENT WAY
 function changePeriod {
   local targetPeriod is target:obt:period.
   local newPeriod is targetPeriod + targetPeriod * (360-getTargetAngle())/360.
@@ -8,7 +11,7 @@ function changePeriod {
   local newSemiMinorAxis is newSemiMajorAxis * sqrt(1-obt:eccentricity).
   local dv is hohhmanLib:transferDeltaV((ship:orbit:semimajoraxis+ship:orbit:semiminoraxis)/2, (newSemiMajorAxis+newSemiMinorAxis)/2).
   
-  local bt is burnTimeForDv(dv).
+  local bt is RocketUtils:burnTimeForDv(dv).
   local correction is 1.
   if newPeriod > ship:obt:period {
     lock steering to prograde.

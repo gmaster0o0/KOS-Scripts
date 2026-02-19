@@ -51,17 +51,17 @@ local function createTransferMap {
 local function addResouce{
   parameter resLex.
   parameter p.
-  parameter r.
+  parameter res.
   parameter _direction.
 
-  if resLex:hasKey(r:name){
-    if resLex[r:name]:hasKey(_direction){
-      resLex[r:name][_direction]:add(p).
+  if resLex:hasKey(res:name){
+    if resLex[res:name]:hasKey(_direction){
+      resLex[res:name][_direction]:add(p).
     }else{
-      resLex[r:name]:add(_direction,list(p)).
+      resLex[res:name]:add(_direction,list(p)).
     }
   }else{
-    resLex:add(r:name,lex(_direction,list(p))).
+    resLex:add(res:name,lex(_direction,list(p))).
   }
   return resLex.
 }

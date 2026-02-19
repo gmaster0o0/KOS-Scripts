@@ -30,7 +30,7 @@ function waitForTransferWindow {
   local ETAofTransfer to utilReduceTo360(getTargetAngle() - hohhmanLib:hohmanmTime()) / angleChangeRate.
   printO("TRANSFER","Hohhman pályamódosítás. DV:" + round(dv,1) + "  BT:"+round(bt)).
   printO("TRANSFER","Hohhman time:" + round(ht,1)).
-  printO("TRANSFER","ETA" + round(ETAofTransfer,1)).
+  printO("TRANSFER","ETA: " + round(ETAofTransfer,1)).
   //addalarm("raw", time:seconds + max(30,ETAofTransfer - bt), "Transfer window", "Ready for transfer").
   add node(time:seconds + ETAofTransfer,0,0,dv).
   lock steering to prograde.

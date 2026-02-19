@@ -22,8 +22,8 @@ function getWarprate {
 }
 
 function warpToNode {
-  parameter n, bt is 0.
+  parameter n, bt is 0, margin is 60.
   printO("NODE", "Warping to Burn Point:["+round(bt,2)+"]").
-	warpto(time:seconds + n:eta - bt/2 - 60).
+	warpto(time:seconds + n:eta - bt/2 - margin).
 	wait until warp <= 0.
 }

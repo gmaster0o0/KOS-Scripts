@@ -1,4 +1,4 @@
-global pidLip is ({
+global pidLib is ({
   local function pidVector {
     parameter kp, ki is 0, kd is 0, minOutput is 0, maxOutput is 0.
     
