@@ -40,7 +40,7 @@ global NodeLib is ({
 
     return node(nodeTime,nodeRadial,nodeNormal,nodePrograde).
   }
-  
+  // OLD node execution.
   local function executeNode {
     parameter execNode is nextNode.
     parameter warpMargin is 60.
@@ -247,13 +247,13 @@ global NodeLib is ({
 
   local function cancelVelocityError {
     parameter velocityError, stopCondition.
-
-    local pidVector is pidLib:pidVector(1, 0.2, 0.2, -1, 1).
+    //set default values
+    local pidVector is pidLib:pidVector(10, 0.2, 0.2, -1, 1).
 
     local avgAxisThrusts is RCSLib:getAvarageThrustVector().
     local availableAxisAccs to avgAxisThrusts / ship:mass.
 
-    local kis to 0.06  * availableAxisAccs.
+        local kis to  availableAxisAccs.
     pidVector:setKI(kis).
 
     pidVector:setpoint(v(0,0,0)).
@@ -263,8 +263,10 @@ global NodeLib is ({
 
     until stopCondition() {
       local error is velocityError().
-      printp(round(error:mag, 7), 18).
-      set shipControl:translation to (-ship:facing) * pidVector:update(time:seconds, -error).
+      //printp(round(error:mag, 7), 18).
+      local transValue is (-ship:facing) * pidVector:update(time:seconds, -error).
+      printp(transValue, 18).
+      set shipControl:translation to transValue.
       wait 0.
     }
 

@@ -63,7 +63,7 @@ function refineLandingPosition {
     return (landingData:landingError:mag < 1) or (not rcs) or abs(landingData:burnStartTime - time:seconds) < 0.1.
   }.
 
-  cancelLandingError(calculateLandingData, stopCondition).
+  //cancelLandingError(calculateLandingData, stopCondition).
 
   return landingData.
 }
@@ -94,7 +94,7 @@ function landAt {
   }
   refineOrbit(nodeExecutionResult:trajectoryData).
   //set landingSimResult:landingData to refineLandingPosition(landingPosition, landingSimResult:landingData:burnStartTime).
-
+  refineLandingPosition(landingPosition, landingSimResult:landingData:burnStartTime).
   set navMode to "SURFACE".
   sas on.
   wait 0.

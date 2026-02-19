@@ -1,4 +1,4 @@
-runoncepath("common_missions").
+wrunoncepath("common_missions").
 runPath("../lib/ui_lib.ks").
 runPath("../lib/staging_lib.ks").
 
